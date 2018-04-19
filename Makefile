@@ -1,4 +1,4 @@
-MAIN         := ezparz
+MAIN := pimpy
 
 include project.mk
 

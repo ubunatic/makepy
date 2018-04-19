@@ -1,19 +1,19 @@
 # Complete CLI Tool Example
 # =========================
 from __future__ import print_function
-from ezparz import ArgumentParser
+from pimpy import argparse
 import logging, json
 
 log  = logging.getLogger(__name__)  # this logger becomes usable after parsing args
-desc = 'My EehZee CLI Tool'
+desc = 'PimPy CLI Example'
 
 def main(argv=None):
     # use the ezparzer just like a regular argparser, with more readable and aligned code
-    p = ArgumentParser(description=desc).with_logging().with_debug()
+    p = argparse.ArgumentParser(description=desc).with_logging(use_structlog=True).with_debug()
     p.flag('--json',          help='use json output format')
     p.flag('--dry_run',       help='perform dry run')
-    p.opti('--file',    '-f', help='input file')
-    p.opti('--num',     '-n', help='number of iterations', metavar='N', type=int)
+    p.opti('--num',     '-n', help='number of iterations', metavar='N', type=int, default=1)
+    p.opti('--file',    '-f', help='input file',           required=True)
     p.opti('command',         help='command to run',       choices=['upper','lower'])
 
     args = p.parse_args(argv)
@@ -31,5 +31,7 @@ def main(argv=None):
 
     if args.dry_run: log.info('dry run successfull')
     else:            print(text)
+    log.info('processed %d charaters in %d lines of text',
+             len(text), len(text.split('\n')))
 
 if __name__ == '__main__': main()

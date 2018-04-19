@@ -1,22 +1,14 @@
 import argparse, logging, os
-
-log = logging.getLogger(__name__)
-
-def setup_logging(args):
-    """setup_logging checks the given arpparse args for the "default" flag,
-    the os.environ for a truthy DEBUG var, and then sets up logging accordingly.
-    """
-    DEBUG = os.environ.get('DEBUG','false').lower() in ('1','true','yes')
-    if getattr(args,'debug', False) or DEBUG: level = logging.DEBUG
-    else:                                     level = logging.INFO
-    log.debug('setup logging')
-    logging.basicConfig(level=level)
+from pimpy import mainlog
 
 class ArgumentParser(argparse.ArgumentParser):
-    """ezparz.ArgumentParser is an argparse.ArgumentParser with convenience functions
+    """{module}.ArgumentParser is an argparse.ArgumentParser with convenience functions
     for setting custom common and custom flags and options.
-    """
-    ez_callbacks = None
+    {doc}""".format(module=__name__,
+                    doc=argparse.ArgumentParser.__doc__)
+
+    _callbacks = None
+    _use_structlog = False
 
     opti = argparse.ArgumentParser.add_argument       # 4-letter short name for add_argument
 
@@ -32,34 +24,42 @@ class ArgumentParser(argparse.ArgumentParser):
         return p
 
     def with_input(p, default='-', nargs='?', help='input file descriptor', **argparse_args):
-        """with_input adds a positional optional "input" argument"""
+        """with_input adds a positional optional 'input' argument"""
         p.add_argument('input', help=help, default=default, nargs=nargs, **argparse_args)
         return p
 
-    def with_logging(p):
+    def with_logging(p, use_structlog=False):
         """with_logging makes the parser setup logging after parsing input args.
         If it finds a --debug flag or a truthy DEBUG value in os.environ,
         logging is setup with DEBUG level. Otherwise logging is setup with INFO level.
         """
+        p._use_structlog = use_structlog
         p.add_parse_callback(p.setup_logging)
         return p
 
-    def setup_logging(p):
+    def setup_logging(p, args):
         """setup_logging reads the current args and sets up logging"""
-        args, _ = p.parse_known_args()
-        setup_logging(args)
+        try:                   DEBUG = args.debug
+        except AttributeError: DEBUG = False
+        DEBUG = DEBUG or os.environ.get('DEBUG','false').lower() in ('1','true','yes')
+        if DEBUG: level = logging.DEBUG
+        else:     level = logging.INFO
+        mainlog.setup_logging(level=level, use_structlog=p._use_structlog)
 
     def add_parse_callback(p, fn):
-        """add_parse_callback adds the given callbacks which are excuted once
+        """add_parse_callback adds the given callback function to be excuted once
         after parsing the parser's arguments"""
-        if p.ez_callbacks is None: p.ez_callbacks = []
-        p.ez_callbacks.append(fn)
+        if p._callbacks is None: p._callbacks = []
+        p._callbacks.append(fn)
+
+    def call_callbacks(p, args):
+        fns = p._callbacks or []  # get current callbacks
+        p._callbacks = None       # delete all callbacks to avoid recursion
+        for fn in fns: fn(args)   # call callbacks
 
     def _parse_known_args(p, *args, **kwargs):
         """_parse_known_args wraps argparse.ArgumentParser._parse_known_args
         to trigger defered functions once after parsing."""
-        res = argparse.ArgumentParser._parse_known_args(p, *args, **kwargs)
-        fns = p.ez_callbacks or []  # get current callbacks
-        p.ez_callbacks = None       # delete all callbacks to avoid recursion
-        for fn in fns: fn()
-        return res
+        args, rest  = argparse.ArgumentParser._parse_known_args(p, *args, **kwargs)
+        p.call_callbacks(args)
+        return args, rest
