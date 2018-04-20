@@ -129,7 +129,6 @@ generate_toxini(){
 
 	commands = make dist-install {posargs:lint dist-test}
 	whitelist_externals = make
-	log
 	INI
 }
 
@@ -212,7 +211,6 @@ _tox(){
 	else tox
 	fi
 }
-
 
 cmd=_tox
 PIP=pip
