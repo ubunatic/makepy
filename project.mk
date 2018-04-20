@@ -128,7 +128,9 @@ dist: $(SETUP_DIR) $(SRC_FILES)
 dist-install: dist; pip install $(WHEEL)
 dist-uninstall:   ; pip uninstall -y $(PKG) || true
 dist-reinstall: dist-uninstall dist-install
-dist-test:
+# override dist-test to add your own dist tests (used for tox testing)
+dist-test: dist-base-test
+dist-base-test:
 	cd tests && python -m pytest -x .
 	cd /tmp && bash -it -c '$(BASH_INIT) $(DIST_TEST)' $(NOL)
 

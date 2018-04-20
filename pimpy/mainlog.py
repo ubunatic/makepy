@@ -4,12 +4,51 @@ try: import structlog
 except ImportError: structlog = None
 try: import colorama
 except ImportError: colorama = None
+try: import pythonjsonlogger
+except ImportError: pythonjsonlogger = None
 
 log = logging.getLogger(__name__)
 
-stdlib_stream_handler = None
+PY2 = sys.version_info.major < 3
 
-def setup_structlog(level=logging.INFO, allow_reattach=False):
+CONSOLE = 'console'
+JSON    = 'json'
+
+def configure_jsonlog():
+    if PY2: coder = structlog.processors.UnicodeEncoder()
+    else:   coder = structlog.processors.UnicodeDecoder()
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            coder,
+            structlog.stdlib.render_to_log_kwargs,
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+
+def configure_consolelog():
+    structlog.configure(
+        processors = [
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ],
+        logger_factory = structlog.stdlib.LoggerFactory(),
+        cache_logger_on_first_use = True,
+    )
+
+def setup_structlog(level=logging.INFO, mode=CONSOLE):
     """setup_structlog sets up colored structlog logging and
     adds a structlog formatter to stdlib logging.
     """
@@ -21,55 +60,52 @@ def setup_structlog(level=logging.INFO, allow_reattach=False):
 
     use_colors = colorama is not None
 
-    log_procs = [
-        structlog.stdlib.add_logger_name,
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-    ]
+    if   mode == JSON:    configure_jsonlog()
+    elif mode == CONSOLE: configure_consolelog()
+    else: raise ValueError("invalid mode: {}".format(mode))
 
-    structlog.configure(processors     = log_procs,
-                        logger_factory = structlog.stdlib.LoggerFactory(),
-                        cache_logger_on_first_use = True)
+    if mode == JSON:
+        from pythonjsonlogger import jsonlogger
+        stream = sys.stdout
+        formatter = jsonlogger.JsonFormatter()
+    else:
+        stream = sys.stderr
+        formatter = structlog.stdlib.ProcessorFormatter(
+            processor = structlog.dev.ConsoleRenderer(colors=use_colors),
+            foreign_pre_chain = [
+                structlog.stdlib.add_logger_name,
+                structlog.stdlib.add_log_level,
+            ]
+        )
 
-    root = logging.getLogger()
-
-    global stdlib_stream_handler
-    if stdlib_stream_handler is not None:
-        if allow_reattach:
-            root.removeHandler(stdlib_stream_handler)
-            log.debug('Reattaching structlog formatter to stdlib root logger.')
-        else:
-            log.warn('Skipping to reattach structlog formatter to stdlib root logger. '
-                     'Please use allow_reattach = True.')
-            return
-
-    formatter = structlog.stdlib.ProcessorFormatter(
-        processor         = structlog.dev.ConsoleRenderer(colors=use_colors),
-        foreign_pre_chain = [
-            structlog.stdlib.add_logger_name,
-            structlog.stdlib.add_log_level,
-        ]
-    )
-    handler = logging.StreamHandler()
+    handler = logging.StreamHandler(stream)
     handler.setFormatter(formatter)
+    root = logging.getLogger()
     root.addHandler(handler)
     root.setLevel(level)
-    stdlib_stream_handler = handler
 
     _log = structlog.get_logger(__name__)
-    _log.debug("setup structlog level={}".format(logging.getLevelName(level)), use_colors=use_colors)
+    _log.debug("setup structlog level={}".format(logging.getLevelName(level)),
+               use_colors=use_colors)
 
+def shutdown():
+    root = logging.getLogger()
+    for h in root.handlers[:]: root.removeHandler(h)
+    for f in root.filters[:]:  root.removeFilter(f)
 
-def setup_logging(level=logging.INFO, use_structlog=False, allow_reattach=False):
+def setup_logging(level=logging.INFO, use_structlog=False, mode=CONSOLE):
     """setup_logging sets up stdlib or structlog logging with to the given level.
     If use_structlog is True, it also sets up structlog logging with convenient defaults
     for human-readable logs.
     """
+    shutdown()
+
+    if mode == JSON:
+        assert structlog         is not None  # structlog required for json logging
+        assert pythonjsonlogger  is not None  # pythonjsonlogger required for json logging
+        use_structlog = True
     if use_structlog:
-        setup_structlog(level=level, allow_reattach=allow_reattach)
+        setup_structlog(level=level, mode=mode)
     else:
         logging.basicConfig(level=level)
         logging.getLogger().setLevel(level)

@@ -28,12 +28,13 @@ class ArgumentParser(argparse.ArgumentParser):
         p.add_argument('input', help=help, default=default, nargs=nargs, **argparse_args)
         return p
 
-    def with_logging(p, use_structlog=False):
+    def with_logging(p, use_structlog=False, mode=mainlog.CONSOLE):
         """with_logging makes the parser setup logging after parsing input args.
         If it finds a --debug flag or a truthy DEBUG value in os.environ,
         logging is setup with DEBUG level. Otherwise logging is setup with INFO level.
         """
         p._use_structlog = use_structlog
+        p._mainlog_mode = mode
         p.add_parse_callback(p.setup_logging)
         return p
 
@@ -44,7 +45,7 @@ class ArgumentParser(argparse.ArgumentParser):
         DEBUG = DEBUG or os.environ.get('DEBUG','false').lower() in ('1','true','yes')
         if DEBUG: level = logging.DEBUG
         else:     level = logging.INFO
-        mainlog.setup_logging(level=level, use_structlog=p._use_structlog)
+        mainlog.setup_logging(level=level, use_structlog=p._use_structlog, mode=p._mainlog_mode)
 
     def add_parse_callback(p, fn):
         """add_parse_callback adds the given callback function to be excuted once
