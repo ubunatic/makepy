@@ -8,7 +8,8 @@ log  = logging.getLogger(__name__)  # this logger becomes usable after parsing a
 desc = 'PimPy CLI Example'
 
 def main(argv=None):
-    # use the ezparzer just like a regular argparser, with more readable and aligned code
+    # The parser is a regular argparse ArgumentParser.
+    # PimPy just allows you to write less and more readable and aligned code.
     p = argparse.ArgumentParser(description=desc).with_logging(use_structlog=True).with_debug()
     p.flag('--json',          help='use json output format')
     p.flag('--dry_run',       help='perform dry run')
@@ -31,7 +32,7 @@ def main(argv=None):
 
     if args.dry_run: log.info('dry run successfull')
     else:            print(text)
-    log.info('processed %d charaters in %d lines of text',
+    log.info('processed %d characters in %d lines of text',
              len(text), len(text.split('\n')))
 
 if __name__ == '__main__': main()

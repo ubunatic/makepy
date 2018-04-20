@@ -1,11 +1,11 @@
+from __future__ import absolute_import
 import argparse, logging, os
 from pimpy import mainlog
 
 class ArgumentParser(argparse.ArgumentParser):
-    """{module}.ArgumentParser is an argparse.ArgumentParser with convenience functions
+    """pimpy.ArgumentParser is an argparse.ArgumentParser with convenience functions
     for setting custom common and custom flags and options.
-    {doc}""".format(module=__name__,
-                    doc=argparse.ArgumentParser.__doc__)
+    """ + argparse.ArgumentParser.__doc__
 
     _callbacks = None
     _use_structlog = False
