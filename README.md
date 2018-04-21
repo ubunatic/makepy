@@ -105,7 +105,17 @@ If you use `p.with_logging(use_structlog=True)` you get colored stuctlog output.
     [debug    ] setup structlog level=DEBUG    [pimpy.mainlog] use_colors=True
     [debug    ] setup logging, level=DEBUG     [pimpy.mainlog]
     [debug    ] running JustLogIt CLI with args:Namespace(debug=True) [__main__]
+    
+ezsetup
+-------
+*Work-In-Progress-Section*
 
+    ezsetup backport             # backport projetc to python2
+    ezsetup init --trg TARGET    # setup new python project
+    ezsetup uninstall            # uninstall current developed package from all pips
+    ezsetup clean                # clean test environments    
+    ezsetup tox -e py3           # run some tests
+    tox                          # run all tests
 
 Motivation
 ----------
