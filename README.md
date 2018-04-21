@@ -4,44 +4,57 @@ PimPy: Do more with with less code
 PimPy provides best practices for a few very common Python modules,
 allowing you to set them up with less and more readable code.
 
-Install via `pip install pimpy`.
+Install via `pip install --user pimpy`.
 
-PimPy improves usage with breaking flexibility or compatibility of the
-following modules.
+PimPy improves usage without breaking flexibility or compatibility
+of the enhanced modules.
 
 pimpy.mainlog
 -------------
 
-The name suggest to use it only in your main. Do not setup logging outside of main modules!
-The modules main function is `mainlog.setup_logging`:
+As the name suggest to use it only in your main. Do not setup logging outside of main modules!
+The module's main function is `mainlog.setup_logging`:
 
 ```python
-    import logging
-    from pimpy import mainlog
+import logging
+from pimpy import mainlog
+
+log = logging.getLogger('pimp-test')
+
+def main(argv=None):
     level = logging.INFO
-    mainlog.setup_logging(level=level)
+    mainlog.setup_logging(level=level, mode='json')
+    log.info('Hello %s!', 'PimPy', extra={'v':1})
+
+main()
+# {"message": "Hello PimPy!", "v": 1}
 ```
-Use `mainlog.setup_logging(level=level, use_structlog=True)` to setup `structlog` logging
-if possible and use stdlib `logging` as fallback. The predefined structlog settings produce
-logs as follows, if you use a stdlib logger aterwards:
+
+The currently supported logging modes are `json` and `console` (default).
+Using `mode='console'` or no mode will produce regular stdlib logs like:
+
+    INFO:pimp-test:Hello PimPy!
+
+Use `mainlog.setup_logging(level=level, use_structlog=True)` to setup `structlog` logging.
+If `struclog` is not installed, stdlib `logging` is used as fallback.
+The predefined structlog settings will format stdlib logs as follows.
 
     [info     ] info msg 1                     [stdlib]
     [debug    ] debug msg 2                    [stdlib]
     [error    ] error msg 3                    [stdlib]
 
-And if you use a structlog logger you can also add key-value pairs:
+If you use a structlog logger you also get key-value pairs.
 
     [info     ] info msg                       [structlog] a=[1, 2, 3] v=1
     [debug    ] debug msg                      [structlog] b=('a', 'b', 'c') v=2
     [error    ] error msg                      [structlog] c={'x': 1} v=3
 
 If `colorama` is installed, the logs will be nicely colored.
-If `structlog` is not installed you get the default stdlib logging output.
 
 pimpy.argparse
 --------------
 
-For readabilty `pimpy.argparse` provides a compatible `ArgumentParser` that uses
+For readability `pimpy.argparse` provides a compatible `ArgumentParser` that uses
 the 4-letter `opti` and `flag` methods instead the clumsy `add_argument`.
 
 ```python
@@ -55,8 +68,9 @@ the 4-letter `opti` and `flag` methods instead the clumsy `add_argument`.
     p.opti('command',         help='command to run',       choices=['upper','lower'])
 ```
 
-Using shorter names and nice alignement allows `argparse` code to be much more readable.
-Yes I know you need to disable some linter rules, but it's worth it, trust me! ;-)
+Using shorter names and nice alignment allows `argparse` code to be much more readable.
+Yes I know, to allow for such multi-column-based coding, you need to disable some linter rules,
+but it's worth it -- not just with setting up parsers -- trust me! ;-)
 PimPy also provides a few shortcuts to setup commonly found flags directly:
 
 * `with_debug`:   adds `--debug` flag
@@ -79,43 +93,29 @@ But you can also break lines.
 ```
 
 Using the `with_logging` and optionally using `with_debug` allows you to quickly
-setup `logging` or `structlog` loggers with human-readable console output:
+setup `logging` or `structlog` loggers with human-readable console output, as already
+shown above; `with_logging` supports the same `mode` and `use_structlog` key-value args
+as used by `mainlog.setup_logging`, described above.
 
-```python
-from pimpy import argparse
-import logging
-
-log = logging.getLogger(__name__)  # this logger becomes usable after parsing args
-
-desc = 'JustLogIt CLI'
-p = argparse.ArgumentParser(description=desc).with_logging().with_debug()
-args = p.parse_args()
-
-# just start logging, the logger is now setup
-log.debug('running %s with args:%s', desc, args)
-```
-
-If you run the above program with `--debug` you will see:
-
-    DEBUG:pimpy.mainlog:setup logging, level=DEBUG
-    DEBUG:__main__:running JustLogIt CLI with args:Namespace(debug=True)
-
-If you use `p.with_logging(use_structlog=True)` you get colored stuctlog output.
-
-    [debug    ] setup structlog level=DEBUG    [pimpy.mainlog] use_colors=True
-    [debug    ] setup logging, level=DEBUG     [pimpy.mainlog]
-    [debug    ] running JustLogIt CLI with args:Namespace(debug=True) [__main__]
-    
 pimpy
--------
-*Work-In-Progress-Section*
+-----
+There is also a `pimpy` command that I use to automate project creation, incremental
+building, testing via `tox`, and uploading to PyPi.
 
-    pimpy backport             # backport projetc to python2
-    pimpy init --trg TARGET    # setup new python project
-    pimpy uninstall            # uninstall current developed package from all pips
-    pimpy clean                # clean test environments    
-    pimpy tox -e py3           # run some tests
-    tox                          # run all tests
+Here are some commands supported by `pimpy`:
+
+    pimpy init --trg ../newproject  # setup new python project
+	 cd ../newproject                # enter new project
+    pimpy backport                  # backport project to python2
+    pimpy uninstall                 # uninstall currently developed package from all pips
+    pimpy clean                     # clean test environments    
+    tox -e py3                      # dist-install the current version and run some tests
+    tox                             # dist-install and test in all testenvs
+
+The `pimpy` command is used in combination with `make`, a custom `Makefile` + a generic
+`project.mk` include, a custom `project.cfg` + a generic py2-py3+ compatible `setup.py`,
+as found in this project. Run `pimpy init --trg PATH_TO_NEW_PROJECT` to setup these files
+in your project and see `pimpy --help` for more options.
 
 Motivation
 ----------

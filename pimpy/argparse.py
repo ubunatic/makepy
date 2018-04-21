@@ -1,16 +1,22 @@
 from __future__ import absolute_import
-import argparse, logging, os
+import logging, os
 from pimpy import mainlog
+from argparse import ArgumentParser as _AP
 
-class ArgumentParser(argparse.ArgumentParser):
-    """pimpy.ArgumentParser is an argparse.ArgumentParser with convenience functions
+class PimpyParser(_AP):
+    """PimpyParser is an argparse.ArgumentParser with convenience functions
     for setting custom common and custom flags and options.
-    """ + argparse.ArgumentParser.__doc__
+    """ + _AP.__doc__
 
     _callbacks = None
     _use_structlog = False
 
-    opti = argparse.ArgumentParser.add_argument       # 4-letter short name for add_argument
+    # explicitly add most common methods to provide better autocompletion
+    parse_args       = _AP.parse_args
+    parse_known_args = _AP.parse_known_args
+    add_argument     = _AP.add_argument
+
+    opti = _AP.add_argument       # 4-letter short name for add_argument
 
     def flag(p, flag, *args, **kwargs):               # 4-letter name for boolean arguments
         """flag create command line flag that does not take additional value parameters"""
@@ -61,7 +67,7 @@ class ArgumentParser(argparse.ArgumentParser):
     def _parse_known_args(p, *args, **kwargs):
         """_parse_known_args wraps argparse.ArgumentParser._parse_known_args
         to trigger defered functions once after parsing."""
-        args, rest  = argparse.ArgumentParser._parse_known_args(p, *args, **kwargs)
+        args, rest  = _AP._parse_known_args(p, *args, **kwargs)
         p.call_callbacks(args)
         return args, rest
 
@@ -69,3 +75,5 @@ class ArgumentParser(argparse.ArgumentParser):
         if   value is None:                return default
         elif type(value) in (list, tuple): return value
         else:                              return (value,)
+
+ArgumentParser = PimpyParser

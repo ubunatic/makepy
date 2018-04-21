@@ -137,7 +137,7 @@ def init(trg, pkg, main, envlist=None, force=False):
 def main(argv=None):
     curdir = os.path.basename(os.path.abspath(os.path.curdir))
     src = [curdir] + list(data_files)
-    p = argparse.ArgumentParser().with_logging().with_debug()
+    p = argparse.PimpyParser().with_logging().with_debug()
     p.opti('commands',        help='command to run', nargs='*', default=['tox'], metavar='CMD')
     p.opti('--pip',           help='set pip executable')
     p.opti('--pkg',     '-p', help='set package name')
