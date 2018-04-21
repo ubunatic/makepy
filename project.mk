@@ -72,7 +72,7 @@ test: lint base-test
 lint: vars ; $(PYTHON) -m flake8 $(SETUP_DIR)
 
 # As a quick tox test, we run tox using the current environment.
-tox: ; ./eztox -e $(PY_TAG)
+tox: ; ./ezsetup -e $(PY_TAG)
 
 # Printing make vars can be helpful when testing multiple Python versions.
 vars:
@@ -104,7 +104,7 @@ script-test:
 
 clean:
 	pyclean .
-	./eztox clean
+	./ezsetup clean
 	rm -rf .pytest_cache .cache dist build backport *.egg-info
 
 dev-install:	$(SETUP_DIR)
@@ -117,7 +117,7 @@ dev-install:	$(SETUP_DIR)
 	$(PIP) show $(PKG)
 
 backport: $(SRC_FILES)
-	./eztox backport -p $(PKG) -s "$(SRC_FILES)" -m $(MAIN)
+	./ezsetup backport -p $(PKG) -s "$(SRC_FILES)" -m $(MAIN)
 
 dist: $(SETUP_DIR) $(SRC_FILES)
 	# build dist and backport dist
@@ -135,7 +135,7 @@ dist-base-test:
 	cd /tmp && bash -it -c '$(BASH_INIT) $(DIST_TEST)' $(NOL)
 
 install: dist-reinstall
-uninstall: ; ./eztox uninstall
+uninstall: ; ./ezsetup uninstall
 
 dists:
 	rm -rf dist; mkdir -p dist

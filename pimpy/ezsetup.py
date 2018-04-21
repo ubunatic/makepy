@@ -9,11 +9,11 @@ from glob import glob
 from pimpy import argparse
 from os.path import join, isdir, isfile
 
-log = logging.getLogger('eztox')
+log = logging.getLogger('ezsetup')
 
 def L(string): return string.split(' ')
 
-PRJ_TOOLS  = L('setup.py setup.cfg project.mk eztox')
+PRJ_TOOLS  = L('setup.py setup.cfg project.mk ezsetup')
 PRJ_EXTRAS = L('.gitignore LICENSE.txt project.cfg')
 
 def arglist(args, more_args=()):
