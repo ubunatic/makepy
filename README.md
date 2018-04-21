@@ -1,5 +1,5 @@
-PimPy: Setup common Python modules with a few lines of code
-===========================================================
+PimPy: Do more with with less code
+==================================
 
 PimPy provides best practices for a few very common Python modules,
 allowing you to set them up with less and more readable code.
@@ -9,14 +9,15 @@ Install via `pip install pimpy`.
 PimPy improves usage with breaking flexibility or compatibility of the
 following modules.
 
-`pimpy.mainlog`
----------------
+pimpy.mainlog
+-------------
+
 The name suggest to use it only in your main. Do not setup logging outside of main modules!
 The modules main function is `mainlog.setup_logging`:
 
 ```python
     import logging
-	 from pimpy import mainlog
+    from pimpy import mainlog
     level = logging.INFO
     mainlog.setup_logging(level=level)
 ```
@@ -37,14 +38,15 @@ And if you use a structlog logger you can also add key-value pairs:
 If `colorama` is installed, the logs will be nicely colored.
 If `structlog` is not installed you get the default stdlib logging output.
 
-`pimpy.argparse`
-----------------
+pimpy.argparse
+--------------
+
 For readabilty `pimpy.argparse` provides a compatible `ArgumentParser` that uses
 the 4-letter `opti` and `flag` methods instead the clumsy `add_argument`.
 
 ```python
     from pimpy import argparse
-	 desc = 'My CLI Tool'
+    desc = 'My CLI Tool'
     p = argparse.ArgumentParser(description=desc)
     p.flag('--json',          help='use json output format')
     p.flag('--dry_run',       help='perform dry run')
@@ -71,9 +73,9 @@ But you can also break lines.
 
 ```python
     p = argparse.ArgumentParser(description=desc)
-	 p.with_logging(use_structlog=True)
-	 p.with_debug()
-	 p.with_input()
+    p.with_logging(use_structlog=True)
+    p.with_debug()
+    p.with_input()
 ```
 
 Using the `with_logging` and optionally using `with_debug` allows you to quickly
