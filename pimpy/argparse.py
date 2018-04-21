@@ -64,3 +64,8 @@ class ArgumentParser(argparse.ArgumentParser):
         args, rest  = argparse.ArgumentParser._parse_known_args(p, *args, **kwargs)
         p.call_callbacks(args)
         return args, rest
+
+    def fix_narg(p, value, default=()):
+        if   value is None:                return default
+        elif type(value) in (list, tuple): return value
+        else:                              return (value,)

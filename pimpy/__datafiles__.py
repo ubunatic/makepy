@@ -1,3 +1,7 @@
+# flake8:noqa=W191
+from __future__ import unicode_literals
+data_files = {}
+data_files['project.mk'] = project_mk = """
 # Generic Project Makefile
 # ========================
 # Copy this file to each of python project to be able to test,
@@ -158,3 +162,50 @@ docker-base-test:
 # This default `docker-test` target runs basic import and script tests.
 # Please override this target as needed.
 docker-test: docker-base-test
+"""
+data_files['setup.cfg'] = setup_cfg = """
+[bdist_wheel]
+universal=0
+
+[metadata]
+license_file = LICENSE.txt
+
+[flake8]
+ignore = E402,E301,E302,E501,E305,E221,W391,E401,E241,E701,E231,E704,E251,E271,E272,E702,E226,E306,E201,E902,E722,E741
+exclude = ./backport .tox build
+"""
+data_files['.gitignore'] = _gitignore = """
+.cache
+build
+dist
+*.egg-info
+.asc
+transpiled
+backport
+.pytest_cache
+.tox
+__pycache__
+*.pyc
+*.pyo
+"""
+data_files['LICENSE.txt'] = LICENSE_txt = """
+Copyright (c) 2018 Uwe Jugel (@ubunatic)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
