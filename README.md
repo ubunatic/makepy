@@ -12,8 +12,8 @@ of the enhanced modules.
 pimpy.mainlog
 -------------
 
-As the name suggest to use it only in your main. Do not setup logging outside of main modules!
-The module's main function is `mainlog.setup_logging`:
+As the name suggest, use it only in your main module. Do not setup logging
+outside of main modules! The module's main function is `mainlog.setup_logging`:
 
 ```python
 import logging
@@ -69,9 +69,9 @@ the 4-letter `opti` and `flag` methods instead the clumsy `add_argument`.
 ```
 
 Using shorter names and nice alignment allows `argparse` code to be much more readable.
-Yes I know, to allow for such multi-column-based coding, you need to disable some linter rules,
-but it's worth it -- not just with setting up parsers -- trust me! ;-)
-PimPy also provides a few shortcuts to setup commonly found flags directly:
+Yes I know, to allow for such multi-column-based coding, you need to disable some linter rules.
+But it's worth it, not just for argparse code, but for better readable Python code in general.
+PimPy's `ArgumentParser` also provides a few shortcuts to setup commonly found flags directly:
 
 * `with_debug`:   adds `--debug` flag
 * `with_logging`: automatically sets up logging using `pimpy.mainlog` after parsing args
@@ -95,17 +95,19 @@ But you can also break lines.
 Using the `with_logging` and optionally using `with_debug` allows you to quickly
 setup `logging` or `structlog` loggers with human-readable console output, as already
 shown above; `with_logging` supports the same `mode` and `use_structlog` key-value args
-as used by `mainlog.setup_logging`, described above.
+as used by `mainlog.setup_logging` described above.
 
 pimpy
 -----
+*WORK-IN-PROGRESS*
+
 There is also a `pimpy` command that I use to automate project creation, incremental
 building, testing via `tox`, and uploading to PyPi.
 
 Here are some commands supported by `pimpy`:
 
     pimpy init --trg ../newproject  # setup new python project
-	 cd ../newproject                # enter new project
+    cd ../newproject                # enter new project
     pimpy backport                  # backport project to python2
     pimpy uninstall                 # uninstall currently developed package from all pips
     pimpy clean                     # clean test environments    
@@ -119,10 +121,12 @@ in your project and see `pimpy --help` for more options.
 
 Motivation
 ----------
-Most Python developer know `argparse`, `logging`, and `structlog` and have
-used them before. However, in my projects I have used the same or very similar
-code over and over again when using these modules. And since I do not like to
-repeat myself, I wanted to extract the most common practices from my projects
-and make them available for my next projects and for others to use.
+Most Python developer know `argparse`, `logging` or `structlog`, `tox` and `pip`, and
+many also use `twine`, `setuptools`, and others. However, in my projects I have used the
+same or very similar code and build chains over and over again when using these tools and
+modules. And since I do not like to repeat myself, I wanted to extract the most common
+practices from my projects and make them available for my next projects and for others to use.
+
+I will keep PimPy updated, with future learning and are happy to welcome pull reuests.
 
 Have fun!
