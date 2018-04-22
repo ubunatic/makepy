@@ -103,14 +103,18 @@ clean:
 	$(PIMPY) clean
 	rm -rf .pytest_cache .cache dist build backport *.egg-info
 
-dev-install:	$(SETUP_DIR)
+dev-install: $(SETUP_DIR)
 	# Directly install $(PKG) in the local system. This will link your installation
 	# to the code in this repo for quick and easy local development.
-	$(PIP) install --user -e $(SETUP_DIR)
+	cd $(SETUP_DIR) && $(PIP) install --user -e .
 	#
 	# source installation
 	# -------------------
 	$(PIP) show $(PKG)
+	@test $(SETUP_DIR) != backport || echo '### Attention ###' \
+		'\nInstalled $(PKG) backport!' \
+		'\nYou must run `make backport` to update the installation' \
+		'\n### Attention ###'
 
 backport: $(SRC_FILES)
 	$(PIMPY) backport -p $(PKG) -s $(SRC_FILES) -m $(MAIN)
@@ -131,7 +135,7 @@ dist-base-test:
 	cd /tmp && bash -it -c '$(BASH_INIT) $(DIST_TEST)' $(NOL)
 
 install: dist-reinstall
-uninstall: ; $(PIMPY) uninstall
+uninstall: ; $(PIMPY) uninstall --pkg $(PKG)
 
 dists:
 	rm -rf dist; mkdir -p dist

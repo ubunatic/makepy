@@ -29,9 +29,10 @@ def backport(src_files, **kwargs):
     sed(r'(ignore[ ]*=[ ]*.*)', '\\1,F401', 'backport/setup.cfg')
 
 def uninstall(pkg, pip='pip'):
+    assert pkg is not None
     for p in (pip, 'pip2', 'pip3'):
-        try: run([p, 'uninstall', '-y', pkg])
-        except OSError: pass
+        try: run(p, 'uninstall', '-y', pkg)
+        except Exception: pass
 
 def find_wheel(pkg,tag):
     return glob(join('dist','{}*{}*.whl'.format(pkg,tag)))[0]
