@@ -1,5 +1,5 @@
 from builtins import open, str
-import os, re, logging
+import sys, os, re, logging
 from datetime import datetime
 from glob import glob
 from makepy.__datafiles__ import data_files
@@ -11,6 +11,11 @@ from os.path import join, isfile
 from makepy.shell import run, cp, call, sed, mkdir, rm, touch, block
 
 log = logging.getLogger('makepy')
+
+py       = sys.version_info.major
+wheeltag = 'py{}'.format(py)
+
+def python(py=py): return 'python{}'.format(py)
 
 def transpile(target):
     run('pasteurize -j 8 -w --no-diff ', target)
@@ -28,14 +33,34 @@ def backport(src_files, **kwargs):
     # ignore linter errors caused by transpiler
     sed(r'(ignore[ ]*=[ ]*.*)', '\\1,F401', 'backport/setup.cfg')
 
-def uninstall(pkg, pip='pip'):
-    assert pkg is not None
-    for p in (pip, 'pip2', 'pip3'):
-        try: run(p, 'uninstall', '-y', pkg)
-        except Exception: pass
+def setup_dir(py=py):
+    if int(py) < 3: return 'backport'
+    else:           return '.'
+
+def pwd(): return os.path.abspath(os.curdir)
 
 def find_wheel(pkg,tag):
     return glob(join('dist','{}*{}*.whl'.format(pkg,tag)))[0]
+
+def dist(py=py):
+    run(python(py) + ' {setup_dir}/setup.py bdist_wheel -q -d {pwd}/dist'.format(
+        setup_dir=setup_dir(py), pwd=pwd()))
+
+def install(pkg, py=py):
+    run('pip{} install'.format(py), find_wheel(pkg, 'py{}'.format(py)))
+
+def uninstall(pkg, py=py):
+    assert pkg is not None
+    for p in {'pip', 'pip{}'.format(py), 'pip2', 'pip3'}:
+        try: run(p, 'uninstall', '-y', pkg)
+        except Exception: pass
+
+def lint(py=py):
+    run(python(py) + ' -m flake8', setup_dir(py))
+
+def test(tests=None, py=py):
+    if tests is None: tests = 'tests'
+    run(python(py) + ' -m pytest -xv', tests)
 
 def copy_tools(trg, force=False):
     mkdir(trg)
@@ -58,7 +83,7 @@ def generate_makefile(trg, main):
         text = templates['Makefile'].format(MAIN=main)
     else:
         log.info('using empty MAIN (use -m MAIN to set a custom main module).')
-        text = 'include project.mk\n'
+        text = 'include $(shell makepy include)\n'
     write_file('Makefile', trg, text)
 
 def generate_toxini(trg, envlist=None):
@@ -135,29 +160,92 @@ def init(trg, pkg, main, envlist=None, force=False):
         NEW_PRJ=prj, TARGET=trg
     ))
 
+def format(src_files, force=False):
+    # TODO: implement modern multi-column-aware unorthodox Python formatter
+    print('ATTENTION: Formatting not implemented!')
+    for f in src_files:
+        if not f.endswith('.py'): print('skipping:', f); continue
+        print('Fake formatting:', f, 'OK')
+
+def help(commands):
+    # TODO: implement contextual help
+    print('ATTENTION: Contextual help is work-in-progress!')
+    for cmd in commands: print('no contextual help found for command:', cmd)
+
+def include():
+    # TODO: use tmp mk file or located dist installed version
+    print('project.mk')
+
 def main(argv=None):
+    # 1. setup defaults for often required options
     curdir = os.path.basename(os.path.abspath(os.path.curdir))
-    src = [curdir] + list(data_files)
-    p = argparse.MakepyParser().with_logging().with_debug()
-    p.opti('commands',        help='command to run', nargs='*', default=['tox'], metavar='CMD')
-    p.opti('--pip',           help='set pip executable')
-    p.opti('--pkg',     '-p', help='set package name')
-    p.opti('--src',     '-s', help='set source files for building backport', nargs='*', default=src)
-    p.opti('--trg',     '-t', help='set target dir for init or copy_tools')
-    p.opti('--main',    '-m', help='set main module')
-    p.opti('--envlist', '-e', help='set tox envlist')
-    p.flag('--force',   '-f', help='force overwriting files')
+    src = [curdir] + list(data_files) + ['setup.py', 'project.cfg', 'tox.ini']
+    pkg = curdir
+    # 2. create the parser with common options
+    p = argparse.MakepyParser().with_logging().with_debug().with_protected_spaces()
+    # 3. setup all flags, commands, etc. as aligned one-liners
+    p.opti('commands',        help='makepy command', nargs='*', default=[], metavar='CMD')
+    p.flag('tox',             help='run tox tests')
+    p.flag('backport',        help='backport project to Python 2')
+    p.flag('uninstall',       help='uninstall package from all pips')
+    p.flag('clean',           help='clean build files')
+    p.flag('test',            help='run unit tests directly')
+    p.flag('lint',            help='lint source code')
+    p.flag('dist',            help='build the wheel')
+    p.flag('install',         help='build and install the wheel')
+    p.flag('init',            help='create makepy files in a new project')
+    p.flag('include',         help='print makepy Makefile location (usage: `include $(shell makepy include)`)')
+    p.flag('format',          help='format python source files using makepy column-aligned formatter')
+    p.opti('--py',      '-P', help='set python version  CMD: test, lint, install, uninstall', default=py, type=int)
+    p.opti('--pkg',     '-p', help='set package name    CMD: init, install, uninstall')
+    p.opti('--src',     '-s', help='set source files    CMD: backport', nargs='*', default=src)
+    p.opti('--trg',     '-t', help='set target dir      CMD: init, copy-tools, dist-install')
+    p.opti('--tests',   '-T', help='set tests dir       CMD: test')
+    p.opti('--main',    '-m', help='set main module     CMD: init, backport')
+    p.opti('--envlist', '-e', help='set tox envlist     CMD: init, tox')
+    p.flag('--force',   '-f', help='overwrite files     CMD: init, copy-tools')
+    # additional help should be available via the 'help' command that
+    # provides help for all or some ot the next given option
+    p.flag('help',            help='show contextual help')
+
+    # 4. parse, analyze, and repair args
     args = p.parse_args(argv)
-    # args.src = p.fix_narg(args.src, default_src)
-    if args.main is not None and args.pkg is None: args.pkg = args.main
-    for cmd in args.commands:
+
+    # repair missing args from related args
+    if args.main is not None and args.pkg  is None: args.pkg = args.main
+    if args.pkg  is not None and args.main is None: args.main = args.pkg
+    if args.pkg  is None: args.pkg  = pkg
+    if args.main is None: args.main = pkg
+
+    # decide what to do when run without any command
+    commands = args.commands
+    if len(commands) == 0: tox(wheeltag);  return
+    if 'help' in commands: help(commands); return
+
+    # complete depended args
+    if 'install' in commands:              commands = ['dist']     + commands
+    if 'dist' in commands and args.py < 3: commands = ['backport'] + commands
+
+    # remove dupes, while preserving order of args
+    clean_commands = []
+    for cmd in commands:
+        if cmd not in clean_commands: clean_commands.append(cmd)
+
+    # 5. run all passed commands with their shared flags and args
+    for cmd in clean_commands:
         if   cmd == 'backport':  backport(args.src, main=args.main)
         elif cmd == 'tox':       tox(args.envlist)
-        elif cmd == 'uninstall': uninstall(args.pkg)
+        elif cmd == 'uninstall': uninstall(args.pkg, py=args.py)
         elif cmd == 'clean':     clean()
+        elif cmd == 'include':   include()
         elif cmd == 'copy':      copy_tools(args.trg, force=args.force)
+        elif cmd == 'test':      test(tests=args.tests, py=args.py)
+        elif cmd == 'dist':      dist(py=args.py)
+        elif cmd == 'install':   install(pkg=args.pkg, py=args.py)
+        elif cmd == 'lint':      lint(py=args.py)
         elif cmd == 'init':      init(args.trg, args.pkg, args.main,
                                       envlist=args.envlist, force=args.force)
+        elif cmd == 'format':    format(args.src, force=args.force)
         else:                    raise ValueError('invalid command: {}'.format(cmd))
 
 if __name__ == '__main__': main()

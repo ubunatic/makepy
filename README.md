@@ -107,17 +107,28 @@ building, testing via `tox`, and uploading to PyPi.
 Here are some commands supported by `makepy`:
 
     makepy init --trg ../newproject  # setup new python project
-    cd ../newproject                # enter new project
+    cd ../newproject                 # enter new project
     makepy backport                  # backport project to python2
+    makepy dist                      # build python wheel for project
+    makepy install                   # install the wheel in the system
     makepy uninstall                 # uninstall currently developed package from all pips
-    makepy clean                     # clean test environments    
-    tox -e py3                      # dist-install the current version and run some tests
-    tox                             # dist-install and test in all testenvs
+    makepy clean                     # clean test environments
+    tox -e py3                       # install the current version in testenv and run tests
+    tox                              # install and test in all testenvs
+    makepy                           # install and test the default testenv
 
-The `makepy` command is used in combination with `make`, a custom `Makefile` + a generic
-`project.mk` include, a custom `project.cfg` + a generic py2-py3+ compatible `setup.py`,
-as found in this project. Run `makepy init --trg PATH_TO_NEW_PROJECT` to setup these files
-in your project and see `makepy --help` for more options.
+The `makepy` command uses a custom `project.cfg`, `tox.ini`, `setup.cfg`, and a generic
+py2-py3+ compatible `setup.py`, as found in this project. It can also be combined with `make`.
+
+Run `makepy init --trg PATH_TO_NEW_PROJECT` to setup all required files; use `-f` to allow
+overwriting existing files. See `makepy --help` for more options.
+
+makepy + make
+-------------
+*DEPRECATED*
+Some makepy functionality is still only available via `make`, using the `make/project.mk`
+include file. To use this, just copy `make/project.mk` and `include` it in your `Makefile`.
+See `make/project.mk` for details and help.
 
 Motivation
 ----------

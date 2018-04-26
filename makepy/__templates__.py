@@ -12,15 +12,35 @@ deps =
     pytest
     flake8
     future
+    makepy
 
-commands = make dist-install {{posargs:lint dist-test}}
-whitelist_externals = make
+commands = makepy install {{posargs:lint test}}
+whitelist_externals = makepy
 """
 
 templates['Makefile'] = Makefile = """
 MAIN         := {MAIN}
 TEST_SCRIPTS := {MAIN} -h
-include project.mk
+include $(shell makepy include)
+
+test: my-test
+my-test:
+\t# write your own tests here
+
+build-something: $(SRC_FILES)
+\t# use makepys make variables to define make dependencies to the source code
+
+# Selection of Included Targets
+# =============================
+# make vars         # see most important makepy make vars
+# make dev-install  # install the current version directly from the source
+# make test         # run tests directly without tox and also run script tests
+# make publish      # sign and upload to PyPi
+# make docker-test  # pip install and test the PyPi version of your package in docker
+#
+# All make targets are subject to change and may be converted to makepy commands in the
+# future. If possible the targets will then just call `makepy` to reproduce the targets
+# build logic.
 """
 
 templates['__init__.py'] = __init___py = """

@@ -29,7 +29,7 @@ PKG       ?= $(notdir $(basename $(CURDIR)))
 # Use PRJ_TESTS = other1 other2 in your Makefile to override.
 PRJ_TESTS ?= $(wildcard ./tests)
 # We use regard project files as source files to trigger rebuilds, etc.
-PRJ_FILES := tox.ini setup.py project.mk setup.cfg project.cfg Makefile LICENSE.txt README.md
+PRJ_FILES := tox.ini setup.py setup.cfg project.cfg Makefile LICENSE.txt README.md
 SRC_FILES := $(PKG) $(PRJ_TESTS) $(PRJ_FILES)
 
 # Using PYTHONPATH lead to unpredicted behavior.
@@ -47,7 +47,7 @@ NEL    := 2>/dev/null  # mute stderr
 
 # export an define setup vars, used for dist building
 export PY_TAG := py$(shell $(PYTHON) -c $(_GET_MAJOR))
-WHEEL  = $(wildcard dist/$(PKG)*$(PY_TAG)*.whl)
+WHEEL  = `find dist -name '$(PKG)*$(PY_TAG)*.whl'`
 ifeq ($(PY_TAG), py2)
 SETUP_DIR := backport
 else
@@ -132,7 +132,7 @@ backport: $(SRC_FILES)
 dist: $(SETUP_DIR) $(SRC_FILES)
 	# build dist and backport dist
 	cd $(SETUP_DIR) && $(PYTHON) setup.py bdist_wheel -q -d $(CURDIR)/dist
-	test -f "$(WHEEL)"
+	test -f "$(WHEEL)"  # wheel file for package $(PKG) and tag $(PY_TAG) must exist
 
 # use default pip and python to safely install the project in the system
 dist-install: dist; pip install $(WHEEL)
