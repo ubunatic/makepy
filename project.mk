@@ -1,5 +1,5 @@
-# Generic Project Makefile
-# ========================
+# Generic Python Project Makefile
+# ===============================
 # Copy this file to each of python project to be able to test,
 # build, and publish it easily.
 #
@@ -9,37 +9,40 @@
 # ---------------------
 # Simply `include project.mk` in your `Makefile`.
 # Then add your common targets, such as `test`, `docker-test`, etc.
-# Now use `make`, `make test`, `make install`, etc.
+# Now you can use `make`, `make test`, `make install`, etc.
 # See each target for more details.
 #
 # Notes
 # -----
 # - All `_lower_case` vars are internal vars not supposed to be overwritten.
-# - Try not to change this file to it your project's needs. Try to handle
+# - Try not to change this file to fit it your project's needs. Try to handle
 #   all custom building in your main `Makefile`.
 #
 
-.PHONY: all test base-test clean install publish test-publish sign \
+.PHONY: defaul all test base-test clean install publish test-publish sign \
 	docker-test docker-base-test clone build dist
 
 # The default project name is the name of the current dir. All code usually
 # resides in another subdir (package) with the same name as the project.
 PKG       ?= $(shell basename $(CURDIR))
-PRJ_TESTS := $(shell if test -e tests; then echo tests; fi)
-PRJ_TOOLS := tox.ini setup.py project.mk
-PRJ_FILES := setup.cfg project.cfg Makefile LICENSE.txt README.md
-SRC_FILES := $(PKG) $(PRJ_TESTS) $(PRJ_FILES) $(PRJ_TOOLS)
+# The default tests dir is 'tests'.
+# Use PRJ_TEST = other1 other2 in your Makefile to override.
+PRJ_TESTS ?= $(shell if test -e tests; then echo tests; fi)
+# We use regard project files as source files to trigger rebuilds, etc.
+PRJ_FILES := tox.ini setup.py project.mk setup.cfg project.cfg Makefile LICENSE.txt README.md
+SRC_FILES := $(PKG) $(PRJ_TESTS) $(PRJ_FILES)
 
 # main python vars, defining python and pip binaries
-_MAJOR = 'import sys; sys.stdout.write(str(sys.version_info.major))'
-PY     := $(shell python -c $(_MAJOR))
+_GET_MAJOR = 'import sys; sys.stdout.write(str(sys.version_info.major) + "\n")'
+_GET_MINOR = 'import sys; sys.stdout.write(str(sys.version_info.minor) + "\n")'
+PY     := $(shell python -c $(_GET_MAJOR)).$(shell python -c $(_GET_MINOR))
 PYTHON := python$(PY)
 PIP    := $(PYTHON) -m pip
-NOL    := 1>/dev/null
-NEL    := 2>/dev/null
+NOL    := 1>/dev/null  # mute stdout
+NEL    := 2>/dev/null  # mute stderr
 
 # export an define setup vars, used for dist building
-export PY_TAG := py$(PY)
+export PY_TAG := py$(shell $(PYTHON) -c $(_GET_MAJOR))
 WHEEL  := `find dist -name '$(PKG)*$(PY_TAG)*.whl'`
 ifeq ($(PY_TAG), py2)
 SETUP_DIR := backport
@@ -59,8 +62,9 @@ BASH_INIT   = set -o errexit; export TERM=xterm;
 PIMPY      := python -m pimpy
 FILE2VAR    = sed 's/[^A-Za-z0-9_]\+/_/g'
 
-# The default target runs tests locally in the current environment
-default: test
+# The default target runs a clean tests in the default environment.
+# Use PY=3 or PY=2 to switch environments.
+default: clean tox
 
 # The `test` target depends on `base-test` to trigger import tests, cli tests, and linting.
 # To setup yor own linting and tests,  please override the `test` and `lint` targets.

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+from __future__ import absolute_import
 from setuptools import setup, find_packages
 from builtins import open
 from configparser import ConfigParser
@@ -6,8 +9,12 @@ import sys, os
 here       = os.path.abspath(os.path.dirname(__file__))
 cfg_file   = os.path.join(here, 'project.cfg')
 data_files = [('.', ['project.cfg'])]
+warnings = []  # store all warnings to report them again after setup is done
 
-PY2 = os.environ.get('PY_TAG') == 'py2' or sys.version_info.major < 3
+def warn(text, *values):
+    w = 'WARNING: ' + (text % tuple(values)) + '\n'
+    sys.stderr.write(w)
+    warnings.append(w)
 
 def load(filename):
     with open(filename) as f: return f.read()
@@ -23,7 +30,7 @@ def load_config(f=cfg_file):
 
 def unquote(s): return s.replace('"','').replace("'",'').strip()
 
-def read_version(main_dir='ohlc', init='__init__.py'):
+def read_version(main_dir, init='__init__.py'):
     version = tag = None
     init = os.path.join(here, main_dir, init)
     for l in load_lines(init):
@@ -32,9 +39,14 @@ def read_version(main_dir='ohlc', init='__init__.py'):
 
     if version is None: raise ValueError('__version__ missing in {}'.format(init))
     if tag     is None: raise ValueError('__tag__ missing in {}'.format(init))
-    if PY2: assert tag == 'py2', 'invalid PY_TAG={}'.format(tag)
-    else:   assert tag == 'py3', 'invalid PY_TAG={}'.format(tag)
-    return version
+    return version, tag
+
+def parse_wheeltag(args=None):
+    if args is None: args = sys.argv[1:]
+    wheeltag = 'py{}'.format(sys.version_info.major)
+    for i, arg in enumerate(args):
+        if arg == '--python-tag': wheeltag = args[i+1]
+    return wheeltag
 
 def run_setup():
     readme = load('README.md')
@@ -55,12 +67,19 @@ def run_setup():
     requires     = project.get('requires','').split(' ')
     keywords     = project.get('keywords','').split(' ')
     description  = project['description']
-    status       = project['status']
     classifiers  = project.get('classifiers', '').split('\n')
+    classifiers += [project['status']]
 
-    code_version = read_version(main)
-    version      = project.get('version', code_version)
-    assert version == code_version, 'please update or remove "version" from project.cfg'
+    code_version, tag = read_version(main)
+    wheeltag          = parse_wheeltag()
+    version           = project.get('version', code_version)
+    if version != code_version:
+        raise ValueError('project version != code_version, '
+                         'please update or remove "version" from project.cfg')
+
+    if wheeltag != tag:
+        warn('Wheel tag != code tag. You are building for python-tag "%s", '
+             'but your code is tagged with "%s"', wheeltag, tag)
 
     py_default  = [unquote(v) for v in python.get('default',  '3').split()]
     py_backport = [unquote(v) for v in python.get('backport', '2').split()]
@@ -74,15 +93,13 @@ def run_setup():
         script = '{b}={m}:main'.format(b=binary, m=main)
         console_scripts.append(script)
 
-    if PY2:
+    if wheeltag == 'py2':
         for script in console_scripts[:]:
             b,m = script.split('=')
             b = '{}'.format(b)  # TODO: check if exists and propose resolutions
             console_scripts.remove(script)
             console_scripts.append('{}={}'.format(b,m))
 
-    classifiers += [status]
-    if PY2:
         requires += deps_backport
         classifiers += ['Programming Language :: Python :: {}'.format(v) for v in py_backport]
         readme = """
@@ -143,5 +160,7 @@ def run_setup():
         project_urls = project_urls,
         data_files = data_files,
     )
+
+    for w in warnings: sys.stderr.write(w)
 
 if __name__ == '__main__': run_setup()
