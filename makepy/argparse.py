@@ -1,10 +1,10 @@
 from __future__ import absolute_import
 import logging, os
-from pimpy import mainlog
+from makepy import mainlog
 from argparse import ArgumentParser as _AP
 
-class PimpyParser(_AP):
-    """PimpyParser is an argparse.ArgumentParser with convenience functions
+class MakepyParser(_AP):
+    """MakepyParser is an argparse.ArgumentParser with convenience functions
     for setting custom common and custom flags and options.
     """ + _AP.__doc__
 
@@ -76,4 +76,4 @@ class PimpyParser(_AP):
         elif type(value) in (list, tuple): return value
         else:                              return (value,)
 
-ArgumentParser = PimpyParser
+ArgumentParser = MakepyParser

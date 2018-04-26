@@ -59,7 +59,7 @@ IMPORT_TEST = $(PYTHON) -c "import $(MAIN) as m; print(\"version:\",m.__version_
 DIST_TEST   = $(IMPORT_TEST); $(CLI_TEST); $(TEST_SCRIPTS)
 DOCKER_CLI_TEST = pip install $(PKG); $(DIST_TEST)
 BASH_INIT   = set -o errexit; export TERM=xterm;
-PIMPY      := python -m pimpy
+MAKEPY      := python -m makepy
 FILE2VAR    = sed 's/[^A-Za-z0-9_]\+/_/g'
 
 # The default target runs a clean tests in the default environment.
@@ -72,7 +72,7 @@ test: lint base-test
 lint: vars ; $(PYTHON) -m flake8 $(SETUP_DIR)
 
 # As a quick tox test, we run tox using the current environment.
-tox: ; $(PIMPY) -e $(PY_TAG)
+tox: ; $(MAKEPY) -e $(PY_TAG)
 
 # Printing make vars can be helpful when testing multiple Python versions.
 vars:
@@ -104,7 +104,7 @@ script-test:
 
 clean:
 	pyclean . || true
-	$(PIMPY) clean
+	$(MAKEPY) clean
 	rm -rf .pytest_cache .cache dist build backport *.egg-info
 
 dev-install: $(SETUP_DIR)
@@ -121,7 +121,7 @@ dev-install: $(SETUP_DIR)
 		'\n### Attention ###'
 
 backport: $(SRC_FILES)
-	$(PIMPY) backport -p $(PKG) -s $(SRC_FILES) -m $(MAIN)
+	$(MAKEPY) backport -p $(PKG) -s $(SRC_FILES) -m $(MAIN)
 
 dist: $(SETUP_DIR) $(SRC_FILES)
 	# build dist and backport dist
@@ -139,7 +139,7 @@ dist-base-test:
 	cd /tmp && bash -it -c '$(BASH_INIT) $(DIST_TEST)' $(NOL)
 
 install: dist-reinstall
-uninstall: ; $(PIMPY) uninstall --pkg $(PKG)
+uninstall: ; $(MAKEPY) uninstall --pkg $(PKG)
 
 dists:
 	rm -rf dist; mkdir -p dist

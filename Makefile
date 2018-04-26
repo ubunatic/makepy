@@ -1,10 +1,13 @@
-MAIN := pimpy
+MAIN := makepy
 
 include project.mk
 
 test dist all: py-data
 
-PY_DATA_FILE  := pimpy/__datafiles__.py
+test: test-examples
+test-examples: ; tests/test_examples.sh
+
+PY_DATA_FILE  := makepy/__datafiles__.py
 DATA_FILES    := project.mk setup.cfg .gitignore LICENSE.txt
 py-data: $(PY_DATA_FILE)
 $(PY_DATA_FILE): $(DATA_FILES) Makefile

@@ -1,15 +1,15 @@
 # Complete CLI Tool Example
 # =========================
 from __future__ import print_function
-from pimpy import argparse
+from makepy import argparse
 import logging, json
 
 log  = logging.getLogger(__name__)  # this logger becomes usable after parsing args
-desc = 'PimPy CLI Example'
+desc = 'makepy CLI Example'
 
 def main(argv=None):
     # The parser is a regular argparse ArgumentParser.
-    # PimPy just allows you to write less and more readable and aligned code.
+    # makepy just allows you to write less and more readable and aligned code.
     p = argparse.ArgumentParser(description=desc).with_logging(use_structlog=True).with_debug()
     p.flag('--json',          help='use json output format')
     p.flag('--dry_run',       help='perform dry run')

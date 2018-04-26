@@ -2,15 +2,15 @@ from builtins import open, str
 import os, re, logging
 from datetime import datetime
 from glob import glob
-from pimpy.__datafiles__ import data_files
-from pimpy.__templates__  import templates
-from pimpy import argparse
-from pimpy.tox import tox, clean
+from makepy.__datafiles__ import data_files
+from makepy.__templates__  import templates
+from makepy import argparse
+from makepy.tox import tox, clean
 from os.path import join, isfile
 
-from pimpy.shell import run, cp, call, sed, mkdir, rm, touch, block
+from makepy.shell import run, cp, call, sed, mkdir, rm, touch, block
 
-log = logging.getLogger('pimpy')
+log = logging.getLogger('makepy')
 
 def transpile(target):
     run('pasteurize -j 8 -w --no-diff ', target)
@@ -138,7 +138,7 @@ def init(trg, pkg, main, envlist=None, force=False):
 def main(argv=None):
     curdir = os.path.basename(os.path.abspath(os.path.curdir))
     src = [curdir] + list(data_files)
-    p = argparse.PimpyParser().with_logging().with_debug()
+    p = argparse.MakepyParser().with_logging().with_debug()
     p.opti('commands',        help='command to run', nargs='*', default=['tox'], metavar='CMD')
     p.opti('--pip',           help='set pip executable')
     p.opti('--pkg',     '-p', help='set package name')

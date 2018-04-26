@@ -7,7 +7,7 @@ try: import pythonjsonlogger
 except ImportError: pythonjsonlogger = None
 
 
-from pimpy import mainlog
+from makepy import mainlog
 
 log = logging.getLogger('stdlib')
 

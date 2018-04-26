@@ -33,6 +33,8 @@ def touch(*args):
     for f in args:
         with open(f, 'a'): pass
 
+def ls(dirname=None): return os.listdir(dirname)
+
 def cp(args, *more_args, **kwargs):
     force = kwargs.get('force', False)
     args = arglist(args, more_args)

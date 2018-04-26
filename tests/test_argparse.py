@@ -1,4 +1,4 @@
-from pimpy.argparse import ArgumentParser
+from makepy.argparse import ArgumentParser
 import logging
 
 def test_argparse():

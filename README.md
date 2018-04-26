@@ -1,39 +1,39 @@
-PimPy: Do more with with less code
-==================================
+makepy: Do more with with less code
+===================================
 
-PimPy provides best practices for a few very common Python modules,
+makepy provides best practices for a few very common Python modules,
 allowing you to set them up with less and more readable code.
 
-Install via `pip install --user pimpy`.
+Install via `pip install --user makepy`.
 
-PimPy improves usage without breaking flexibility or compatibility
+makepy improves usage without breaking flexibility or compatibility
 of the enhanced modules.
 
-pimpy.mainlog
--------------
+makepy.mainlog
+--------------
 
 As the name suggest, use it only in your main module. Do not setup logging
 outside of main modules! The module's main function is `mainlog.setup_logging`:
 
 ```python
 import logging
-from pimpy import mainlog
+from makepy import mainlog
 
 log = logging.getLogger('pimp-test')
 
 def main(argv=None):
     level = logging.INFO
     mainlog.setup_logging(level=level, mode='json')
-    log.info('Hello %s!', 'PimPy', extra={'v':1})
+    log.info('Hello %s!', 'makepy', extra={'v':1})
 
 main()
-# {"message": "Hello PimPy!", "v": 1}
+# {"message": "Hello makepy!", "v": 1}
 ```
 
 The currently supported logging modes are `json` and `console` (default).
 Using `mode='console'` or no mode will produce regular stdlib logs like:
 
-    INFO:pimp-test:Hello PimPy!
+    INFO:pimp-test:Hello makepy!
 
 Use `mainlog.setup_logging(level=level, use_structlog=True)` to setup `structlog` logging.
 If `struclog` is not installed, stdlib `logging` is used as fallback.
@@ -51,14 +51,14 @@ If you use a structlog logger you also get key-value pairs.
 
 If `colorama` is installed, the logs will be nicely colored.
 
-pimpy.argparse
---------------
+makepy.argparse
+---------------
 
-For readability `pimpy.argparse` provides a compatible `ArgumentParser` that uses
+For readability `makepy.argparse` provides a compatible `ArgumentParser` that uses
 the 4-letter `opti` and `flag` methods instead the clumsy `add_argument`.
 
 ```python
-    from pimpy import argparse
+    from makepy import argparse
     desc = 'My CLI Tool'
     p = argparse.ArgumentParser(description=desc)
     p.flag('--json',          help='use json output format')
@@ -71,10 +71,10 @@ the 4-letter `opti` and `flag` methods instead the clumsy `add_argument`.
 Using shorter names and nice alignment allows `argparse` code to be much more readable.
 Yes I know, to allow for such multi-column-based coding, you need to disable some linter rules.
 But it's worth it, not just for argparse code, but for better readable Python code in general.
-PimPy's `ArgumentParser` also provides a few shortcuts to setup commonly found flags directly:
+makepy's `ArgumentParser` also provides a few shortcuts to setup commonly found flags directly:
 
 * `with_debug`:   adds `--debug` flag
-* `with_logging`: automatically sets up logging using `pimpy.mainlog` after parsing args
+* `with_logging`: automatically sets up logging using `makepy.mainlog` after parsing args
 * `with_input`:   adds `--input` option, defaulting to `-` (aka. `stdin`)
 
 I often use this one-liner.
@@ -97,27 +97,27 @@ setup `logging` or `structlog` loggers with human-readable console output, as al
 shown above; `with_logging` supports the same `mode` and `use_structlog` key-value args
 as used by `mainlog.setup_logging` described above.
 
-pimpy
------
+makepy
+------
 *WORK-IN-PROGRESS*
 
-There is also a `pimpy` command that I use to automate project creation, incremental
+There is also a `makepy` command that I use to automate project creation, incremental
 building, testing via `tox`, and uploading to PyPi.
 
-Here are some commands supported by `pimpy`:
+Here are some commands supported by `makepy`:
 
-    pimpy init --trg ../newproject  # setup new python project
+    makepy init --trg ../newproject  # setup new python project
     cd ../newproject                # enter new project
-    pimpy backport                  # backport project to python2
-    pimpy uninstall                 # uninstall currently developed package from all pips
-    pimpy clean                     # clean test environments    
+    makepy backport                  # backport project to python2
+    makepy uninstall                 # uninstall currently developed package from all pips
+    makepy clean                     # clean test environments    
     tox -e py3                      # dist-install the current version and run some tests
     tox                             # dist-install and test in all testenvs
 
-The `pimpy` command is used in combination with `make`, a custom `Makefile` + a generic
+The `makepy` command is used in combination with `make`, a custom `Makefile` + a generic
 `project.mk` include, a custom `project.cfg` + a generic py2-py3+ compatible `setup.py`,
-as found in this project. Run `pimpy init --trg PATH_TO_NEW_PROJECT` to setup these files
-in your project and see `pimpy --help` for more options.
+as found in this project. Run `makepy init --trg PATH_TO_NEW_PROJECT` to setup these files
+in your project and see `makepy --help` for more options.
 
 Motivation
 ----------
@@ -127,6 +127,6 @@ same or very similar code and build chains over and over again when using these 
 modules. And since I do not like to repeat myself, I wanted to extract the most common
 practices from my projects and make them available for my next projects and for others to use.
 
-I will keep PimPy updated, with future learning and are happy to welcome pull reuests.
+I will keep makepy updated, with future learning and are happy to welcome pull reuests.
 
 Have fun!

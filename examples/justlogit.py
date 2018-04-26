@@ -1,4 +1,4 @@
-from pimpy import argparse
+from makepy import argparse
 import logging
 
 log  = logging.getLogger(__name__)  # this logger becomes usable after parsing args
