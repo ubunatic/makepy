@@ -36,6 +36,10 @@ PRJ_TESTS ?= $(shell if test -e tests; then echo tests; fi)
 PRJ_FILES := tox.ini setup.py project.mk setup.cfg project.cfg Makefile LICENSE.txt README.md
 SRC_FILES := $(PKG) $(PRJ_TESTS) $(PRJ_FILES)
 
+# Using PYTHONPATH lead to unpredicted behavior.
+# Similar to tox, we also disable it for all male targets.
+unexport PYTHONPATH
+
 # main python vars, defining python and pip binaries
 _GET_MAJOR = 'import sys; sys.stdout.write(str(sys.version_info.major) + "\n")'
 _GET_MINOR = 'import sys; sys.stdout.write(str(sys.version_info.minor) + "\n")'

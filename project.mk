@@ -24,13 +24,17 @@
 
 # The default project name is the name of the current dir. All code usually
 # resides in another subdir (package) with the same name as the project.
-PKG       ?= $(shell basename $(CURDIR))
+PKG       ?= $(notdir $(basename $(CURDIR)))
 # The default tests dir is 'tests'.
-# Use PRJ_TEST = other1 other2 in your Makefile to override.
-PRJ_TESTS ?= $(shell if test -e tests; then echo tests; fi)
+# Use PRJ_TESTS = other1 other2 in your Makefile to override.
+PRJ_TESTS ?= $(wildcard ./tests)
 # We use regard project files as source files to trigger rebuilds, etc.
 PRJ_FILES := tox.ini setup.py project.mk setup.cfg project.cfg Makefile LICENSE.txt README.md
 SRC_FILES := $(PKG) $(PRJ_TESTS) $(PRJ_FILES)
+
+# Using PYTHONPATH lead to unpredicted behavior.
+# Similar to tox, we also disable it for all male targets.
+unexport PYTHONPATH
 
 # main python vars, defining python and pip binaries
 _GET_MAJOR = 'import sys; sys.stdout.write(str(sys.version_info.major) + "\n")'
@@ -43,7 +47,7 @@ NEL    := 2>/dev/null  # mute stderr
 
 # export an define setup vars, used for dist building
 export PY_TAG := py$(shell $(PYTHON) -c $(_GET_MAJOR))
-WHEEL  := `find dist -name '$(PKG)*$(PY_TAG)*.whl'`
+WHEEL  = $(wildcard dist/$(PKG)*$(PY_TAG)*.whl)
 ifeq ($(PY_TAG), py2)
 SETUP_DIR := backport
 else
@@ -85,6 +89,8 @@ vars:
 	# PYTHON    $(PYTHON)
 	# PIP       $(PIP)
 	# SETUP_DIR $(SETUP_DIR)
+	# WHEEL     $(WHEEL)
+	# PRJ_TESTS $(PRJ_TESTS)
 	#
 	# Python
 	# ------
