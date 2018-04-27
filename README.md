@@ -1,4 +1,4 @@
-makepy: Do more with with less code
+makepy: do more with with less code
 ===================================
 
 makepy provides best practices for a few very common Python modules,
