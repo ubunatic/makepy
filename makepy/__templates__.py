@@ -12,7 +12,6 @@ deps =
     pytest
     flake8
     future
-    makepy
 
 commands = makepy install {{posargs:lint test}}
 whitelist_externals = makepy
@@ -47,6 +46,21 @@ templates['__init__.py'] = __init___py = """
 # {flake_rules}
 __version__ = '0.0.1'
 __tag__     = 'py3'
+
+def main(argv=None):
+    import logging
+    from makepy import argparse
+    log = logging.getLogger(__name__)
+    p = argparse.ArgumentParser().with_logging().with_debug()
+    args = p.parse_args(argv)
+    log.info('main called with %s', args)
+""".format(flake_rules = 'flake8: noqa: F401')
+
+templates['__main__.py'] = __main___py = """
+# {flake_rules}
+from __future__ import absolute_import
+from {{MAIN}} import main
+main()
 """.format(flake_rules = 'flake8: noqa: F401')
 
 templates['README.md'] = README_md = """

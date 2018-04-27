@@ -26,6 +26,12 @@ def call(args, *more_args):
     log.debug('call: subprocess.check_output(%s)', args)
     return subprocess.check_output(args)
 
+def call_unsafe(args, *more_args):
+    try: return call(args, *more_args)
+    except subprocess.CalledProcessError as err:
+        log.warn('ignoring failed call_unsafe for cmd %s: %s', args, err)
+        return ''
+
 def rm(*args):
     for f in args: sh.rmtree(f, ignore_errors=True)
 

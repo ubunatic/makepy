@@ -10,7 +10,7 @@ test-examples: ; tests/test_examples.sh
 PY_DATA_FILE  := makepy/__datafiles__.py
 DATA_FILES    := setup.cfg .gitignore LICENSE.txt
 py-data: $(PY_DATA_FILE)
-$(PY_DATA_FILE): $(DATA_FILES) Makefile
+$(PY_DATA_FILE): $(DATA_FILES) Makefile setup.py
 	echo "# flake8:noqa=W191" > $@
 	echo "from __future__ import unicode_literals" >> $@
 	echo "data_files = {}"    >> $@
@@ -18,7 +18,9 @@ $(PY_DATA_FILE): $(DATA_FILES) Makefile
 		base=`basename $$f`; \
 		var=`echo $$base | $(FILE2VAR)`; \
 		echo "data_files['$$base'] = $$var =" '"""'; \
-		cat $$f; \
+		cat $$f | sed 's#"""#\\"\\"\\"#g'; \
 		echo '"""'; \
 	done >> $@
+	cp setup.py $(@D)/__setup__.py
+	chmod -x $(@D)/__setup__.py
 

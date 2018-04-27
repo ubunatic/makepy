@@ -6,14 +6,16 @@ from makepy.__datafiles__ import data_files
 from makepy.__templates__  import templates
 from makepy import argparse
 from makepy.tox import tox, clean
-from os.path import join, isfile
+from os.path import join, isfile, dirname, abspath, basename
 
-from makepy.shell import run, cp, call, sed, mkdir, rm, touch, block
+from makepy.shell import run, cp, call_unsafe, sed, mkdir, rm, block
 
 log = logging.getLogger('makepy')
 
 py       = sys.version_info.major
 wheeltag = 'py{}'.format(py)
+here     = dirname(__file__)
+setup_py = join(here,'__setup__.py')
 
 def python(py=py): return 'python{}'.format(py)
 
@@ -37,7 +39,7 @@ def setup_dir(py=py):
     if int(py) < 3: return 'backport'
     else:           return '.'
 
-def pwd(): return os.path.abspath(os.curdir)
+def pwd(): return abspath(os.curdir)
 
 def find_wheel(pkg,tag):
     return glob(join('dist','{}*{}*.whl'.format(pkg,tag)))[0]
@@ -66,16 +68,14 @@ def copy_tools(trg, force=False):
     mkdir(trg)
     # create project tools that do not have any custom code
     for f, text in data_files.items(): write_file(f, trg, text)
-    log.info('copied tools: %s -> %s', list(data_files), trg)
+    with open(setup_py) as f: write_file('setup.py', trg, f.read())
+    log.info('copied tools: %s -> %s', list(data_files) + ['setup.py'], trg)
 
 def write_file(name, trg_dir, text, force=False, **fmt):
     trg = join(trg_dir, name)
     if isfile(trg) and not force: return
     if len(fmt) > 0: text = text.format(**fmt)
     with open(trg, 'w') as f: f.write(str(text))
-
-def generate_main(pkg_dir):
-    touch(join(pkg_dir, '__main__.py'))    # make package runnable
 
 def generate_makefile(trg, main):
     if main is not None:
@@ -92,12 +92,13 @@ def generate_toxini(trg, envlist=None):
     log.info('using %s', envlist)
     write_file('tox.ini', trg, templates['tox.ini'], envline=envline)
 
-def generate_initpy(pkg_dir):
-    write_file('__init__.py', pkg_dir, templates['__init__.py'])
+def generate_packagefiles(pkg_dir, main):
+    write_file('__init__.py', pkg_dir, templates['__init__.py'].format(MAIN=main))
+    write_file('__main__.py', pkg_dir, templates['__main__.py'].format(MAIN=main))
 
 def user_name():
-    name = call('git config --get user.name').strip()
-    if name == '': name = os.environ.get('USER')
+    name = call_unsafe('git config --get user.name').strip()
+    if name == '': name = os.environ.get('USER','System Root')
     return name
 
 def safe_name(): return re.sub(r'[^a-z0-9_\.]', '.', user_name())
@@ -105,7 +106,7 @@ def safe_name(): return re.sub(r'[^a-z0-9_\.]', '.', user_name())
 def github_name(): return os.environ.get('GITHUB_NAME', '@' + safe_name())
 
 def user_email():
-    email = call('git config --get user.email').strip()
+    email = call_unsafe('git config --get user.email').strip()
     if email == '': email = safe_name() + '@gmail.com'
     return email
 
@@ -136,13 +137,12 @@ def generate_tests(trg,prj):
 def init(trg, pkg, main, envlist=None, force=False):
     assert None not in (trg, pkg)
     pkg_dir = join(trg, pkg)
-    prj = re.sub('[^A-Za-z0-9_-]+','-', os.path.basename(trg))
+    prj = re.sub('[^A-Za-z0-9_-]+','-', basename(abspath(trg)))
     mkdir(pkg_dir)
     copy_tools(trg, force=force)
-    generate_main(pkg_dir)
     generate_makefile(trg, main)
     generate_toxini(trg, envlist)
-    generate_initpy(pkg_dir)
+    generate_packagefiles(pkg_dir, main)
     generate_readme(trg, prj)
     generate_tests(trg, prj)
     generate_project_cfg(trg, prj)
@@ -178,7 +178,7 @@ def include():
 
 def main(argv=None):
     # 1. setup defaults for often required options
-    curdir = os.path.basename(os.path.abspath(os.path.curdir))
+    curdir = basename(pwd())
     src = [curdir] + list(data_files) + ['setup.py', 'project.cfg', 'tox.ini']
     pkg = curdir
     # 2. create the parser with common options
@@ -216,6 +216,7 @@ def main(argv=None):
     if args.pkg  is not None and args.main is None: args.main = args.pkg
     if args.pkg  is None: args.pkg  = pkg
     if args.main is None: args.main = pkg
+    if args.trg: args.trg = abspath(args.trg)
 
     # decide what to do when run without any command
     commands = args.commands
