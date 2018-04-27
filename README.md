@@ -138,6 +138,6 @@ same or very similar code and build chains over and over again when using these 
 modules. And since I do not like to repeat myself, I wanted to extract the most common
 practices from my projects and make them available for my next projects and for others to use.
 
-I will keep makepy updated, with future learning and are happy to welcome pull reuests.
+I will keep makepy updated, with future learning and are happy to welcome pull requests.
 
 Have fun!
