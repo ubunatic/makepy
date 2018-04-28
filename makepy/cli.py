@@ -15,7 +15,6 @@ log = logging.getLogger('makepy')
 py       = sys.version_info.major
 wheeltag = 'py{}'.format(py)
 here     = dirname(__file__)
-setup_py = join(here,'__setup__.py')
 
 def python(py=py): return 'python{}'.format(py)
 
@@ -45,8 +44,9 @@ def find_wheel(pkg,tag):
     return glob(join('dist','{}*{}*.whl'.format(pkg,tag)))[0]
 
 def dist(py=py):
-    run(python(py) + ' {setup_dir}/setup.py bdist_wheel -q -d {pwd}/dist'.format(
-        setup_dir=setup_dir(py), pwd=pwd()))
+    os.environ['MAKEPYPATH'] = makepypath()
+    run('{binary} {setup_dir}/setup.py bdist_wheel -q -d {pwd}/dist'.format(
+        binary=python(py), setup_dir=setup_dir(py), pwd=pwd()))
 
 def install(pkg, py=py):
     run('pip{} install'.format(py), find_wheel(pkg, 'py{}'.format(py)))
@@ -68,12 +68,12 @@ def copy_tools(trg, force=False):
     mkdir(trg)
     # create project tools that do not have any custom code
     for f, text in data_files.items(): write_file(f, trg, text)
-    with open(setup_py) as f: write_file('setup.py', trg, f.read())
     log.info('copied tools: %s -> %s', list(data_files) + ['setup.py'], trg)
 
-def write_file(name, trg_dir, text, force=False, **fmt):
+def write_file(name, trg_dir, text, force=False, strip=True, **fmt):
     trg = join(trg_dir, name)
     if isfile(trg) and not force: return
+    if strip: text = text.strip() + '\n'
     if len(fmt) > 0: text = text.format(**fmt)
     with open(trg, 'w') as f: f.write(str(text))
 
@@ -174,7 +174,9 @@ def help(commands):
 
 def include():
     # TODO: use tmp mk file or located dist installed version
-    print('project.mk')
+    return 'project.mk'
+
+def makepypath(): return (abspath(join(here,'..')))
 
 def main(argv=None):
     # 1. setup defaults for often required options
@@ -195,6 +197,7 @@ def main(argv=None):
     p.flag('install',         help='build and install the wheel')
     p.flag('init',            help='create makepy files in a new project')
     p.flag('include',         help='print makepy Makefile location (usage: `include $(shell makepy include)`)')
+    p.flag('path',            help='print PYHTONPATH to use makepy as module')
     p.flag('format',          help='format python source files using makepy column-aligned formatter')
     p.opti('--py',      '-P', help='set python version  CMD: test, lint, install, uninstall', default=py, type=int)
     p.opti('--pkg',     '-p', help='set package name    CMD: init, install, uninstall')
@@ -234,19 +237,20 @@ def main(argv=None):
 
     # 5. run all passed commands with their shared flags and args
     for cmd in clean_commands:
-        if   cmd == 'backport':  backport(args.src, main=args.main)
-        elif cmd == 'tox':       tox(args.envlist)
-        elif cmd == 'uninstall': uninstall(args.pkg, py=args.py)
-        elif cmd == 'clean':     clean()
-        elif cmd == 'include':   include()
-        elif cmd == 'copy':      copy_tools(args.trg, force=args.force)
-        elif cmd == 'test':      test(tests=args.tests, py=args.py)
-        elif cmd == 'dist':      dist(py=args.py)
-        elif cmd == 'install':   install(pkg=args.pkg, py=args.py)
-        elif cmd == 'lint':      lint(py=args.py)
-        elif cmd == 'init':      init(args.trg, args.pkg, args.main,
-                                      envlist=args.envlist, force=args.force)
-        elif cmd == 'format':    format(args.src, force=args.force)
-        else:                    raise ValueError('invalid command: {}'.format(cmd))
+        if   cmd == 'backport':   backport(args.src, main=args.main)
+        elif cmd == 'tox':        tox(args.envlist)
+        elif cmd == 'uninstall':  uninstall(args.pkg, py=args.py)
+        elif cmd == 'clean':      clean()
+        elif cmd == 'include':    print(include())
+        elif cmd == 'path':       print(makepypath())
+        elif cmd == 'copy':       copy_tools(args.trg, force=args.force)
+        elif cmd == 'test':       test(tests=args.tests, py=args.py)
+        elif cmd == 'dist':       dist(py=args.py)
+        elif cmd == 'install':    install(pkg=args.pkg, py=args.py)
+        elif cmd == 'lint':       lint(py=args.py)
+        elif cmd == 'init':       init(args.trg, args.pkg, args.main,
+                                       envlist=args.envlist, force=args.force)
+        elif cmd == 'format':     format(args.src, force=args.force)
+        else:                     raise ValueError('invalid command: {}'.format(cmd))
 
 if __name__ == '__main__': main()

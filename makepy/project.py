@@ -1,20 +1,13 @@
-#!/usr/bin/env python
-
 from __future__ import absolute_import
-from setuptools import setup, find_packages
 from builtins import open
 from configparser import ConfigParser
 import sys, os
 
-here       = os.path.abspath(os.path.dirname(__file__))
-cfg_file   = os.path.join(here, 'project.cfg')
 data_files = [('.', ['project.cfg'])]
-warnings = []  # store all warnings to report them again after setup is done
 
 def warn(text, *values):
     w = 'WARNING: ' + (text % tuple(values)) + '\n'
     sys.stderr.write(w)
-    warnings.append(w)
 
 def load(filename):
     with open(filename) as f: return f.read()
@@ -23,16 +16,16 @@ def load_lines(filename):
     with open(filename) as f:
         for l in f: yield l.strip()
 
-def load_config(f=cfg_file):
+def load_config(project_cfg='project.cfg'):
     p = ConfigParser()
-    p.read(cfg_file)
+    p.read(project_cfg)
     return {sec:dict(p.items(sec)) for sec in p.sections()}
 
 def unquote(s): return s.replace('"','').replace("'",'').strip()
 
 def read_version(main_dir, init='__init__.py'):
     version = tag = None
-    init = os.path.join(here, main_dir, init)
+    init = os.path.join(main_dir, init)
     for l in load_lines(init):
         if   l.startswith('__version__'): version = unquote(l.split('=')[1])
         elif l.startswith('__tag__'):     tag     = unquote(l.split('=')[1])
@@ -48,9 +41,9 @@ def parse_wheeltag(args=None):
         if arg == '--python-tag': wheeltag = args[i+1]
     return wheeltag
 
-def run_setup():
+def load_project(project_cfg='project.cfg'):
     readme = load('README.md')
-    cfg = load_config()
+    cfg = load_config(project_cfg)
     project = cfg['project']
     author  = cfg.get('author',  {})
     scripts = cfg.get('scripts', {})
@@ -70,7 +63,9 @@ def run_setup():
     classifiers  = project.get('classifiers', '').split('\n')
     classifiers += [project['status']]
 
-    code_version, tag = read_version(main)
+    project_dir = os.path.dirname(project_cfg)
+
+    code_version, tag = read_version(os.path.join(project_dir, main))
     wheeltag          = parse_wheeltag()
     version           = project.get('version', code_version)
     if version != code_version:
@@ -129,11 +124,11 @@ def run_setup():
             'Source':        'https://github.com/{}/{}'.format(gh, name),
         }
 
-    setup(
+    return dict(
         name             = project_name,
         version          = version,
         description      = description,
-        long_description              = readme,
+        long_description = readme,
         long_description_content_type = 'text/markdown',
         url              = url,
         author           = author_name,
@@ -142,9 +137,6 @@ def run_setup():
         license          = license,
         classifiers = classifiers,
         keywords = keywords,
-        packages = find_packages(
-            exclude = ['contrib', 'docs', 'tests'],
-        ),
         install_requires = requires,
         # example: pip install widdy[dev]
         extras_require = {
@@ -161,6 +153,3 @@ def run_setup():
         data_files = data_files,
     )
 
-    for w in warnings: sys.stderr.write(w)
-
-if __name__ == '__main__': run_setup()

@@ -12,6 +12,26 @@ license_file = LICENSE.txt
 ignore = E402,E301,E302,E501,E305,E221,W391,E401,E241,E701,E231,E704,E251,E271,E272,E702,E226,E306,E201,E902,E722,E741
 exclude = ./backport .tox build
 """
+data_files['setup.py'] = setup_py = """
+#!/usr/bin/env python
+
+from __future__ import absolute_import
+
+import os, sys
+from setuptools import setup, find_packages
+
+try: from makepy.project import load_project   # Try to use makepy module from current env.
+except ImportError:
+    sys.path.append(os.environ['MAKEPYPATH'])  # Fallback to first available system makepy.
+    from makepy.project import load_project    # Usage: MAKEPYPATH=`makepy path` python
+
+def run_setup():
+    kwargs = load_project('project.cfg')
+    kwargs['packages'] = find_packages(exclude=['contrib', 'docs', 'tests'])
+    setup(**kwargs)
+
+if __name__ == '__main__': run_setup()
+"""
 data_files['.gitignore'] = _gitignore = """
 .cache
 build
