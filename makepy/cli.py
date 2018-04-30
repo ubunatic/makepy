@@ -101,7 +101,7 @@ def user_name():
     if name == '': name = os.environ.get('USER','System Root')
     return name
 
-def safe_name(): return re.sub(r'[^a-z0-9_\.]', '.', user_name())
+def safe_name(): return re.sub(r'[^a-z0-9_\.]', str('.'), str(user_name()))
 
 def github_name(): return os.environ.get('GITHUB_NAME', '@' + safe_name())
 
@@ -181,7 +181,7 @@ def makepypath(): return (abspath(join(here,'..')))
 def main(argv=None):
     # 1. setup defaults for often required options
     curdir = basename(pwd())
-    src = [curdir] + list(data_files) + ['setup.py', 'project.cfg', 'tox.ini']
+    src = [curdir] + list(data_files) + ['setup.py', 'project.cfg', 'tox.ini', 'README.md']
     pkg = curdir
     # 2. create the parser with common options
     p = argparse.MakepyParser().with_logging().with_debug().with_protected_spaces()

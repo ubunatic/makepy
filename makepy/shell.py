@@ -6,7 +6,8 @@ from os.path import join, isdir, isfile, islink
 log = logging.getLogger(__name__)
 
 def arglist(args, more_args=()):
-    if type(args) in (str,bytes): args = args.split(' ')
+    log.debug('arglist: (%s:%s, %s)', args, type(args), more_args)
+    if type(args) not in (list,tuple): args = args.split(' ')
     return list(args) + list(more_args)
 
 def unpad(text):

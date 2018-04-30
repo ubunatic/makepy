@@ -31,29 +31,4 @@ ADD Makefile project.cfg setup.cfg setup.py tox.ini $WORKDIR/
 RUN python2 -m makepy install
 RUN python3 -m makepy install
  
-ENV WORKDIR /workspace/empty
-RUN mkdir -p $WORKDIR
-WORKDIR $WORKDIR
-
-# test makepy init and tests
-RUN makepy init --trg . \
-    && ls -la . empty \
-    && makepy help \
-    && makepy test -P 2 \
-    && makepy test -P 3 \
-    && makepy lint \
-    && makepy dist \
-    && makepy backport \
-    && makepy -e py2 \
-    && makepy -e py3 \
-    && makepy install \
-    && makepy install -P 2 \
-    && cd /tmp \
-        && python2 -m empty \
-        && python3 -m empty \
-        && empty \
-    && cd $WORKDIR \
-    && makepy uninstall \
-    && rm -rf $WORKDIR
-
 WORKDIR /

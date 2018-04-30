@@ -20,7 +20,8 @@ whitelist_externals = makepy
 templates['Makefile'] = Makefile = """
 MAIN         := {MAIN}
 TEST_SCRIPTS := {MAIN} -h
-include $(shell makepy include)
+include make/vars.mk
+include make/project.mk
 
 test: my-test
 my-test:

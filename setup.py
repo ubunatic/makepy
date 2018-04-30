@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# NOTE: This is a generated, generic setup.py, produced by `makepy init`.
+#       Try to customize project.cfg first, before editing this file.
 
 from __future__ import absolute_import
 
