@@ -1,0 +1,9 @@
+steps:
+- name: gcr.io/cloud-builders/docker
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/makepy', '.']
+- name: gcr.io/cloud-builders/gsutil
+  args: ['ls', 'gs://ubunatic-public/build-status']
+- name: gcr.io/$PROJECT_ID/makepy
+  args: ['makepy', '--help']
+
+images: [ 'gcr.io/$PROJECT_ID/makepy' ]
