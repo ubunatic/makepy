@@ -30,5 +30,8 @@ ADD Makefile project.cfg setup.cfg setup.py tox.ini $WORKDIR/
 
 RUN python2 -m makepy install
 RUN python3 -m makepy install
+
+# makepy is now installed, we can remove the source from the image
+RUN rm -rf $WORKDIR
  
 WORKDIR /
