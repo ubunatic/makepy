@@ -10,7 +10,7 @@ test-publish:
 
 PY2_WHEEL = $(shell find dist -name '$(PKG)*py2-none-any*.whl')
 PY3_WHEEL = $(shell find dist -name '$(PKG)*py3-none-any*.whl')
-publish: sign
+publish: clean dists sign
 	# upload to pypi (requires pypi account)
 	twine upload --repository pypi $(PY3_WHEEL)
 	twine upload --repository pypi $(PY2_WHEEL)
