@@ -23,6 +23,9 @@ def load_config(project_cfg='project.cfg'):
 
 def unquote(s): return s.replace('"','').replace("'",'').strip()
 
+def cleanup_classifiers(classifiers):
+    return [c for c in classifiers if c.strip() != ""]
+
 def read_version(main_dir, init='__init__.py'):
     version = tag = None
     init = os.path.join(main_dir, init)
@@ -124,6 +127,8 @@ def load_project(project_cfg='project.cfg'):
             'Source':        'https://github.com/{}/{}'.format(gh, name),
         }
 
+    classifiers = cleanup_classifiers(classifiers)
+
     return dict(
         name             = project_name,
         version          = version,
@@ -135,8 +140,8 @@ def load_project(project_cfg='project.cfg'):
         author_email     = author_email,
         python_requires  = python_requires,
         license          = license,
-        classifiers = classifiers,
-        keywords = keywords,
+        classifiers      = classifiers,
+        keywords         = keywords,
         install_requires = requires,
         # example: pip install widdy[dev]
         extras_require = {
