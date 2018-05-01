@@ -1,4 +1,4 @@
-.PHONY: default clean dist backport install uninstall tox shell-test
+.PHONY: default clean dist dists backport install uninstall tox shell-test
 
 include make/vars.mk
 
@@ -16,7 +16,7 @@ include make/project.mk
 include make/tests.mk
 
 # call makepy for project setup tasks
-dist backport install dev-install tox: ; $(MAKEPY) $@
+dist dists backport install dev-install tox: ; $(MAKEPY) $@
 
 uninstall:
 	$(MAKEPY) uninstall

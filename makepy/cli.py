@@ -48,6 +48,10 @@ def dist(py=py):
     args = ' setup.py bdist_wheel -q -d {pwd}/dist'.format(pwd=pwd())
     run(python(py) + args, cwd=setup_dir(py))
 
+def dists(py=py):
+    pys = range(2, max(3, py) + 1)  # include [2,3] + major versions up to `py`
+    for py in pys: dist(py=py)
+
 def install(pkg, py=py, source=False):
     if source:
         os.environ['MAKEPYPATH'] = makepypath()
@@ -207,6 +211,7 @@ def main(argv=None):
     p.flag('test',            help='run unit tests directly')
     p.flag('lint',            help='lint source code')
     p.flag('dist',            help='build the wheel')
+    p.flag('dists',           help='build all the wheels')
     p.flag('install',         help='build and install the wheel')
     p.flag('dev-install',     help='directly install the source code in the current environment')
     p.flag('init',            help='create makepy files in a new project')
@@ -241,12 +246,14 @@ def main(argv=None):
     if 'help' in commands: help(commands); return
 
     # complete depended args
-    if 'install' in commands:              commands = ['dist']     + commands
-    if 'dist' in commands and args.py < 3: commands = ['backport'] + commands
+    prep = []
+    if 'install' in commands:              prep = ['dist']     + prep
+    if 'dist' in commands and args.py < 3: prep = ['backport'] + prep
+    if 'dists' in commands:                prep = ['backport'] + prep
 
     # remove dupes, while preserving order of args
     clean_commands = []
-    for cmd in commands:
+    for cmd in prep + commands:
         if cmd not in clean_commands: clean_commands.append(cmd)
 
     # 5. run all passed commands with their shared flags and args
@@ -260,6 +267,7 @@ def main(argv=None):
         elif cmd == 'copy':        copy_tools(args.trg, force=args.force)
         elif cmd == 'test':        test(tests=args.tests, py=args.py)
         elif cmd == 'dist':        dist(py=args.py)
+        elif cmd == 'dists':       dists(py=args.py)
         elif cmd == 'install':     install(pkg=args.pkg, py=args.py, source=False)
         elif cmd == 'dev-install': install(pkg=args.pkg, py=args.py, source=True)
         elif cmd == 'lint':        lint(py=args.py)
