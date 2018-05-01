@@ -1,15 +1,15 @@
 ![build status](https://storage.googleapis.com/ubunatic-public/makepy/build-status.svg)
 
-makepy: do more with with less code
-===================================
+makepy: Handsfree Python Module Programming
+===========================================
 
-makepy provides best practices for a few very common Python modules,
-allowing you to set them up with less and more readable code.
+This project provides:
+* `makepy`: A command line tool to simplify Python project setup, installation, and testing.
+* `makepy.mainlog`: A module for making `logging` and `structlog` setup less cumbersome and error-prone.
+* `makepy.argparse.ArgumentParser`: An `argparse`-compatible argument parser that facilitates
+   better readable `argparse` code.
 
 Install via `pip install --user makepy`.
-
-makepy improves usage without breaking flexibility or compatibility
-of the enhanced modules.
 
 makepy.mainlog
 --------------
@@ -136,14 +136,21 @@ Some makepy functionality is still only available via `make`, using the `make/pr
 to a `make` dir in your project and `include` them in your `Makefile`, as done by this project.
 See each mk-file for details and help.
 
+Goals
+-----
+In general the project aims to provide a few flexible tools and modules that should help with daily
+Python programming tasks, when developing your own Python modules, libaries, and command line tools.
+It aims to capture best practices and make them reusable, allowing you to write less and more readable code,
+without breaking flexibility or compatibility of the enhanced modules.
+
 Motivation
 ----------
-Most Python developer know `argparse`, `logging` or `structlog`, `tox` and `pip`, and
+Most Python programmers know `argparse`, `logging` or `structlog`, `tox` and `pip`, and
 many also use `twine`, `setuptools`, and others. However, in my projects I have used the
 same or very similar code and build chains over and over again when using these tools and
 modules. And since I do not like to repeat myself, I wanted to extract the most common
 practices from my projects and make them available for my next projects and for others to use.
 
-I will keep makepy updated, with future learning and are happy to welcome pull requests.
+I will keep makepy updated, with future learning and I am happy to welcome pull requests.
 
 Have fun!
