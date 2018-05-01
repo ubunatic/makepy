@@ -1,0 +1,6 @@
+{
+  "name": "google-container-status-storage",
+  "version": "0.0.1",
+  "description": "Write Google Cloud Container Builder Status to Google Cloud Storage",
+  "main": "buildstatus.js"
+}

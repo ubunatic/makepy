@@ -45,3 +45,9 @@ docker:
 	docker build -t gcr.io/ubunatic/makepy .
 	docker run --rm -it gcr.io/ubunatic/makepy /workspace/makepy/tests/test_examples.sh
 	docker run --rm -it gcr.io/ubunatic/makepy /workspace/makepy/tests/test_init.sh
+
+GCF_BUCKET = ubunatic-functions
+gcf-deploy:
+	gcloud beta functions deploy subscribe --trigger-topic cloud-builds \
+		--stage-bucket $(GCF_BUCKET) --source cloudbuild
+		
