@@ -1,3 +1,5 @@
+![build status](https://storage.googleapis.com/ubunatic-public/makepy/build-status.svg)
+
 makepy: do more with with less code
 ===================================
 
