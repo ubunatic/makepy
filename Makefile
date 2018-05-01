@@ -59,3 +59,5 @@ gcf-logs: ;	gcloud beta functions logs read subscribe
 gcf: gcf-deploy
 	sleep 30; $(MAKE) gcf-call
 	sleep 5;  $(MAKE) gcf-logs
+
+include make/twine.mk

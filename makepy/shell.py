@@ -20,15 +20,16 @@ def block(string, *args, **kwargs):
     string = string.format(*args, **kwargs)
     return str(unpad(string).strip() + '\n')
 
-def run(args, *more_args): return subprocess.check_call(arglist(args, more_args))
+def run(args, *more_args, **PopenArgs):
+    return subprocess.check_call(arglist(args, more_args), **PopenArgs)
 
-def call(args, *more_args):
+def call(args, *more_args, **PopenArgs):
     args = arglist(args, more_args)
     log.debug('call: subprocess.check_output(%s)', args)
-    return subprocess.check_output(args)
+    return subprocess.check_output(args, **PopenArgs)
 
-def call_unsafe(args, *more_args):
-    try: return call(args, *more_args)
+def call_unsafe(args, *more_args, **PopenArgs):
+    try: return call(args, *more_args, **PopenArgs)
     except subprocess.CalledProcessError as err:
         log.warn('ignoring failed call_unsafe for cmd %s: %s', args, err)
         return ''

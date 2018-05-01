@@ -45,8 +45,8 @@ def find_wheel(pkg,tag):
 
 def dist(py=py):
     os.environ['MAKEPYPATH'] = makepypath()
-    run('{binary} {setup_dir}/setup.py bdist_wheel -q -d {pwd}/dist'.format(
-        binary=python(py), setup_dir=setup_dir(py), pwd=pwd()))
+    args = ' setup.py bdist_wheel -q -d {pwd}/dist'.format(pwd=pwd())
+    run(python(py) + args, cwd=setup_dir(py))
 
 def install(pkg, py=py):
     run('pip{} install'.format(py), find_wheel(pkg, 'py{}'.format(py)))
