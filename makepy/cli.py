@@ -58,7 +58,7 @@ def uninstall(pkg, py=py):
         except Exception: pass
 
 def lint(py=py):
-    run(python(py) + ' -m flake8', setup_dir(py))
+    run(python(py) + ' -m flake8', cwd=setup_dir(py))
 
 def test(tests=None, py=py):
     if tests is None: tests = 'tests'
