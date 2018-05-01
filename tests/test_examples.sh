@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-here=`dirname $0`
+set -o errexit
+
+self=`readlink -f $0`
+here=`dirname $self`
 project=`dirname $here`
 examples="$project/examples"
 
-set -o errexit
 
 for f in `find $examples -name '*.py'`; do
 	cmd="python $f --help"

@@ -45,7 +45,7 @@ The predefined structlog settings will format stdlib logs as follows.
     [debug    ] debug msg 2                    [stdlib]
     [error    ] error msg 3                    [stdlib]
 
-If you use a structlog logger you also get key-value pairs.
+If you use structlog loggers in your modules you also get key-value pairs.
 
     [info     ] info msg                       [structlog] a=[1, 2, 3] v=1
     [debug    ] debug msg                      [structlog] b=('a', 'b', 'c') v=2
@@ -60,14 +60,14 @@ For readability `makepy.argparse` provides a compatible `ArgumentParser` that us
 the 4-letter `opti` and `flag` methods instead the clumsy `add_argument`.
 
 ```python
-    from makepy import argparse
-    desc = 'My CLI Tool'
-    p = argparse.ArgumentParser(description=desc)
-    p.flag('--json',          help='use json output format')
-    p.flag('--dry_run',       help='perform dry run')
-    p.opti('--num',     '-n', help='number of iterations', metavar='N', type=int, default=1)
-    p.opti('--file',    '-f', help='input file',           required=True)
-    p.opti('command',         help='command to run',       choices=['upper','lower'])
+from makepy import argparse
+desc = 'My CLI Tool'
+p = argparse.ArgumentParser(description=desc)
+p.flag('--json',          help='use json output format')
+p.flag('--dry_run',       help='perform dry run')
+p.opti('--num',     '-n', help='number of iterations', metavar='N', type=int, default=1)
+p.opti('--file',    '-f', help='input file',           required=True)
+p.opti('command',         help='command to run',       choices=['upper','lower'])
 ```
 
 Using shorter names and nice alignment allows `argparse` code to be much more readable.
@@ -78,46 +78,50 @@ makepy's `ArgumentParser` also provides a few shortcuts to setup commonly found 
 * `with_debug`:   adds `--debug` flag
 * `with_logging`: automatically sets up logging using `makepy.mainlog` after parsing args
 * `with_input`:   adds `--input` option, defaulting to `-` (aka. `stdin`)
+* `with_protected_spaces`: will replace spaces in all `help` texts with protected spaces to
+  prevent `argparse` from stripping them. This way, you do not need to setup a special
+  help formatter to achive aligned table-like help texts on the command line.
+  You can just align them in the code! See `makep/cli.py` as an example.
 
-I often use this one-liner.
+To setup debug and logging I usually use this one-liner in my parsers:
 
 ```python
-    p = argparse.ArgumentParser(description=desc).with_logging(use_structlog=True).with_debug()
+p = argparse.ArgumentParser(description=desc).with_logging(use_structlog=True).with_debug()
 ```
 
-But you can also break lines.
+If you do not like one-liners, you can also break lines.
 
 ```python
-    p = argparse.ArgumentParser(description=desc)
-    p.with_logging(use_structlog=True)
-    p.with_debug()
-    p.with_input()
+p = argparse.ArgumentParser(description=desc)
+p.with_logging(use_structlog=True)
+p.with_debug()
+p.with_input()
 ```
 
 Using the `with_logging` and optionally using `with_debug` allows you to quickly
-setup `logging` or `structlog` loggers with human-readable console output, as already
-shown above; `with_logging` supports the same `mode` and `use_structlog` key-value args
+setup `logging` or `structlog` loggers with human-readable console output.
+Therefore, `with_logging` supports the same `mode` and `use_structlog` key-value args
 as used by `mainlog.setup_logging` described above.
 
-makepy
-------
-*WORK-IN-PROGRESS*
-
+makepy command
+--------------
 There is also a `makepy` command that I use to automate project creation, incremental
 building, testing via `tox`, and uploading to PyPi.
 
 Here are some commands supported by `makepy`:
 
-    makepy init --trg ../newproject  # setup new python project
-    cd ../newproject                 # enter new project
-    makepy backport                  # backport project to python2
-    makepy dist                      # build python wheel for project
-    makepy install                   # install the wheel in the system
-    makepy uninstall                 # uninstall currently developed package from all pips
-    makepy clean                     # clean test environments
-    tox -e py3                       # install the current version in testenv and run tests
-    tox                              # install and test in all testenvs
-    makepy                           # install and test the default testenv
+    makepy init --trg ~/workspace/newproject # setup new python project
+    cd ~/workspace/newproject                # enter new project
+
+    makepy backport   # backport project to python2
+    tox -e py3        # install the current version in testenv and run tests
+    tox               # install and test in all testenvs
+    makepy            # install and test the default testenv
+    makepy clean      # cleanup test environments
+
+    makepy dist       # build python wheel for project
+    makepy install    # install the wheel in the system (may require sudo)
+    makepy uninstall  # uninstall current project from all pips
 
 The `makepy` command uses a custom `project.cfg`, `tox.ini`, `setup.cfg`, and a generic
 py2-py3+ compatible `setup.py`, as found in this project. It can also be combined with `make`.
@@ -127,10 +131,10 @@ overwriting existing files. See `makepy --help` for more options.
 
 makepy + make
 -------------
-*DEPRECATED*
-Some makepy functionality is still only available via `make`, using the `make/project.mk`
-include file. To use this, just copy `make/project.mk` and `include` it in your `Makefile`.
-See `make/project.mk` for details and help.
+Some makepy functionality is still only available via `make`, using the `make/project.mk`,
+`make/vars.mk`, etc. include files. You can still use these in your project. Just copy them
+to a `make` dir in your project and `include` them in your `Makefile`, as done by this project.
+See each mk-file for details and help.
 
 Motivation
 ----------

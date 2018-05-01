@@ -2,5 +2,8 @@
   "name": "google-container-status-storage",
   "version": "0.0.1",
   "description": "Write Google Cloud Container Builder Status to Google Cloud Storage",
-  "main": "buildstatus.js"
+  "main": "buildstatus.js",
+  "dependencies": {
+		"@google-cloud/storage": ">=1.6.0 <2.0.0"
+  }
 }

@@ -4,14 +4,14 @@
 		<stop offset="1" stop-opacity=".1"/>
 	</linearGradient>
 	<rect rx="3" width="90" height="20" fill="#555"/>
-	<rect rx="3" x="37" width="53" height="20" fill="#4c1"/>
-	<path fill="#4c1" d="M37 0h4v20h-4z"/>
+	<rect rx="3" x="37" width="53" height="20" fill="green"/>
+	<path fill="green" d="M37 0h4v20h-4z"/>
 	<rect rx="3" width="90" height="20" fill="url(#a)"/>
 
 	<g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
 		<text x="19.5" y="15" fill="#010101" fill-opacity=".3">build</text>
 		<text x="19.5" y="14">build</text>
-		<text x="62.5" y="15" fill="#010101" fill-opacity=".3">passing</text>
-		<text x="62.5" y="14">passing</text>
+		<text x="62.5" y="15" fill="#010101" fill-opacity=".3">STATUS</text>
+		<text x="62.5" y="14">STATUS</text>
 	</g>
 </svg>

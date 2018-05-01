@@ -180,9 +180,8 @@ def makepypath(): return (abspath(join(here,'..')))
 
 def main(argv=None):
     # 1. setup defaults for often required options
-    curdir = basename(pwd())
-    src = [curdir] + list(data_files) + ['setup.py', 'project.cfg', 'tox.ini', 'README.md']
-    pkg = curdir
+    common_src = list(data_files) + ['setup.py', 'project.cfg', 'tox.ini', 'README.md']
+    src = [basename(abspath('.'))] + common_src
     # 2. create the parser with common options
     p = argparse.MakepyParser().with_logging().with_debug().with_protected_spaces()
     # 3. setup all flags, commands, etc. as aligned one-liners
@@ -202,7 +201,7 @@ def main(argv=None):
     p.opti('--py',      '-P', help='set python version  CMD: test, lint, install, uninstall', default=py, type=int)
     p.opti('--pkg',     '-p', help='set package name    CMD: init, install, uninstall')
     p.opti('--src',     '-s', help='set source files    CMD: backport', nargs='*', default=src)
-    p.opti('--trg',     '-t', help='set target dir      CMD: init, copy-tools, dist-install')
+    p.opti('--trg',     '-t', help='set target dir      CMD: init, copy-tools, dist-install', default='.')
     p.opti('--tests',   '-T', help='set tests dir       CMD: test')
     p.opti('--main',    '-m', help='set main module     CMD: init, backport')
     p.opti('--envlist', '-e', help='set tox envlist     CMD: init, tox')
@@ -215,11 +214,11 @@ def main(argv=None):
     args = p.parse_args(argv)
 
     # repair missing args from related args
-    if args.main is not None and args.pkg  is None: args.pkg = args.main
-    if args.pkg  is not None and args.main is None: args.main = args.pkg
-    if args.pkg  is None: args.pkg  = pkg
-    if args.main is None: args.main = pkg
-    if args.trg: args.trg = abspath(args.trg)
+    args.trg = abspath(args.trg)  # create a valid named path
+    pkg = basename(args.trg)      # override default pkg for new trg
+    if args.pkg  is None: args.pkg = args.main
+    if args.pkg  is None: args.pkg = pkg
+    if args.main is None: args.main = args.pkg
 
     # decide what to do when run without any command
     commands = args.commands

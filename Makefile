@@ -1,3 +1,5 @@
+.PHONY: default clean dist backport install uninstall tox shell-test
+
 include make/vars.mk
 
 default: clean test
@@ -7,7 +9,7 @@ clean: pyclean; rm -rf .pytest_cache .cache dist build backport
 # setup dependecies
 install tox: dist
 dist dev-install test: py-data
-test: manual-tests
+test: shell-test
 
 # include generic targets
 include make/project.mk
@@ -21,7 +23,7 @@ uninstall:
 	rm -rf *.egg-info
 
 # add some CLI tests
-manual-tests:
+shell-test:
 	tests/test_examples.sh
 	tests/test_init.sh
 
@@ -41,13 +43,19 @@ $(PY_DATA_FILE): $(DATA_FILES) Makefile
 		echo '"""'; \
 	done >> $@
 
+IMG     = gcr.io/ubunatic/makepy
+VOLUMES = -v $(CURDIR)/tests:/tests -v $(CURDIR)/examples:/examples
 docker:
-	docker build -t gcr.io/ubunatic/makepy .
-	docker run --rm -it gcr.io/ubunatic/makepy /workspace/makepy/tests/test_examples.sh
-	docker run --rm -it gcr.io/ubunatic/makepy /workspace/makepy/tests/test_init.sh
+	docker build -t $(IMG) .
+	docker run --rm $(VOLUMES) -it $(IMG) "/tests/test_examples.sh && /tests/test_init.sh"
 
 GCF_BUCKET = ubunatic-functions
 gcf-deploy:
 	gcloud beta functions deploy subscribe --trigger-topic cloud-builds \
 		--stage-bucket $(GCF_BUCKET) --source cloudbuild
-		
+
+gcf-call: ; gcloud beta functions call subscribe --data '{}'
+gcf-logs: ;	gcloud beta functions logs read subscribe
+gcf: gcf-deploy
+	sleep 30; $(MAKE) gcf-call
+	sleep 5;  $(MAKE) gcf-logs
