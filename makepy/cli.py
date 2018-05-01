@@ -48,8 +48,22 @@ def dist(py=py):
     args = ' setup.py bdist_wheel -q -d {pwd}/dist'.format(pwd=pwd())
     run(python(py) + args, cwd=setup_dir(py))
 
-def install(pkg, py=py):
-    run('pip{} install'.format(py), find_wheel(pkg, 'py{}'.format(py)))
+def install(pkg, py=py, source=False):
+    if source:
+        os.environ['MAKEPYPATH'] = makepypath()
+        run('pip{} install --user -e .'.format(py), cwd=setup_dir(py))
+        run('pip{}'.format(py), 'show', pkg)
+        if setup_dir(py) == 'backport':
+            sys.stderr.write(block(
+                """
+                ### Attention ###
+                Installed {PKG} backport!'
+                You must run `makepy backport` to update the installation'
+                ### Attention ###
+                """, PKG=pkg
+            ))
+    else:
+        run('pip{} install'.format(py), find_wheel(pkg, 'py{}'.format(py)))
 
 def uninstall(pkg, py=py):
     assert pkg is not None
@@ -194,6 +208,7 @@ def main(argv=None):
     p.flag('lint',            help='lint source code')
     p.flag('dist',            help='build the wheel')
     p.flag('install',         help='build and install the wheel')
+    p.flag('dev-install',     help='directly install the source code in the current environment')
     p.flag('init',            help='create makepy files in a new project')
     p.flag('include',         help='print makepy Makefile location (usage: `include $(shell makepy include)`)')
     p.flag('path',            help='print PYHTONPATH to use makepy as module')
@@ -236,20 +251,21 @@ def main(argv=None):
 
     # 5. run all passed commands with their shared flags and args
     for cmd in clean_commands:
-        if   cmd == 'backport':   backport(args.src, main=args.main)
-        elif cmd == 'tox':        tox(args.envlist)
-        elif cmd == 'uninstall':  uninstall(args.pkg, py=args.py)
-        elif cmd == 'clean':      clean()
-        elif cmd == 'include':    print(include())
-        elif cmd == 'path':       print(makepypath())
-        elif cmd == 'copy':       copy_tools(args.trg, force=args.force)
-        elif cmd == 'test':       test(tests=args.tests, py=args.py)
-        elif cmd == 'dist':       dist(py=args.py)
-        elif cmd == 'install':    install(pkg=args.pkg, py=args.py)
-        elif cmd == 'lint':       lint(py=args.py)
-        elif cmd == 'init':       init(args.trg, args.pkg, args.main,
-                                       envlist=args.envlist, force=args.force)
-        elif cmd == 'format':     format(args.src, force=args.force)
-        else:                     raise ValueError('invalid command: {}'.format(cmd))
+        if   cmd == 'backport':    backport(args.src, main=args.main)
+        elif cmd == 'tox':         tox(args.envlist)
+        elif cmd == 'uninstall':   uninstall(args.pkg, py=args.py)
+        elif cmd == 'clean':       clean()
+        elif cmd == 'include':     print(include())
+        elif cmd == 'path':        print(makepypath())
+        elif cmd == 'copy':        copy_tools(args.trg, force=args.force)
+        elif cmd == 'test':        test(tests=args.tests, py=args.py)
+        elif cmd == 'dist':        dist(py=args.py)
+        elif cmd == 'install':     install(pkg=args.pkg, py=args.py, source=False)
+        elif cmd == 'dev-install': install(pkg=args.pkg, py=args.py, source=True)
+        elif cmd == 'lint':        lint(py=args.py)
+        elif cmd == 'init':        init(args.trg, args.pkg, args.main,
+                                        envlist=args.envlist, force=args.force)
+        elif cmd == 'format':      format(args.src, force=args.force)
+        else:                      raise ValueError('invalid command: {}'.format(cmd))
 
 if __name__ == '__main__': main()

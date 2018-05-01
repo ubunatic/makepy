@@ -45,16 +45,3 @@ pyclean:
 	find . -name '*.py[co]'    -delete
 	find . -name '__pycache__' -delete
 
-dev-install: $(SETUP_DIR)
-	# Directly install $(PKG) in the local system. This will link your installation
-	# to the code in this repo for quick and easy local development.
-	cd $(SETUP_DIR) && $(PIP) install --user -e .
-	#
-	# source installation
-	# -------------------
-	$(PIP) show $(PKG)
-	@test $(SETUP_DIR) != backport || echo '### Attention ###' \
-		'\nInstalled $(PKG) backport!' \
-		'\nYou must run `make backport` to update the installation' \
-		'\n### Attention ###'
-

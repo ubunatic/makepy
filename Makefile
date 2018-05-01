@@ -16,7 +16,7 @@ include make/project.mk
 include make/tests.mk
 
 # call makepy for project setup tasks
-dist backport install tox: ; $(MAKEPY) $@
+dist backport install dev-install tox: ; $(MAKEPY) $@
 
 uninstall:
 	$(MAKEPY) uninstall
