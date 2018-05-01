@@ -246,14 +246,14 @@ def main(argv=None):
     if 'help' in commands: help(commands); return
 
     # complete depended args
-    prep = []
-    if 'install' in commands:              prep = ['dist']     + prep
-    if 'dist' in commands and args.py < 3: prep = ['backport'] + prep
-    if 'dists' in commands:                prep = ['backport'] + prep
+    if 'install' in commands:                 commands = ['dist']     + commands
+    if 'dist'    in commands and args.py < 3: commands = ['backport'] + commands
+    if 'dists'   in commands:                 commands = ['backport'] + commands
+    if 'clean'   in commands:                 commands = ['clean']    + commands  # move clean to front
 
     # remove dupes, while preserving order of args
     clean_commands = []
-    for cmd in prep + commands:
+    for cmd in commands:
         if cmd not in clean_commands: clean_commands.append(cmd)
 
     # 5. run all passed commands with their shared flags and args
