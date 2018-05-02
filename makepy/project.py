@@ -80,9 +80,9 @@ def load_project(project_cfg='project.cfg'):
              'but your code is tagged with "%s"', wheeltag, tag)
 
     py_default  = [unquote(v) for v in python.get('default',  '3').split()]
-    py_backport = [unquote(v) for v in python.get('backport', '2').split()]
+    # py_backport = [unquote(v) for v in python.get('backport', '2').split()]
     deps_default  = python.get('default_deps','').split(' ')
-    deps_backport = python.get('backport_deps','').split(' ')
+    # deps_backport = python.get('backport_deps','').split(' ')
 
     console_scripts = ['{}={}'.format(k, scripts[k]) for k in scripts]
     entry_points    = {'console_scripts': console_scripts}
@@ -98,20 +98,22 @@ def load_project(project_cfg='project.cfg'):
             console_scripts.remove(script)
             console_scripts.append('{}={}'.format(b,m))
 
-        requires += deps_backport
-        classifiers += ['Programming Language :: Python :: {}'.format(v) for v in py_backport]
-        readme = """
-        **This is the backport of '{name}' for Python 2.**
-        **Please upgrade to Python 3+ and use the current '{name}' version.**
-        {rest}
-        """.format(name=name, rest=readme)
-        project_name    = name
-        python_requires = python.get('backport_requires', '>=2.7, <3')
+        # requires += deps_backport
+        # classifiers += ['Programming Language :: Python :: {}'.format(v) for v in py_backport]
+        # readme = """
+        # **This is the backport of '{name}' for Python 2.**
+        # **Please upgrade to Python 3+ and use the current '{name}' version.**
+        # {rest}
+        # """.format(name=name, rest=readme)
+        # python_requires = python.get('backport_requires', '>=2.7, <3')
     else:
-        requires += deps_default
-        classifiers += ['Programming Language :: Python :: {}'.format(v) for v in py_default]
-        project_name    = name
-        python_requires = python.get('default_requires', '>=3.5')
+        # TODO: check how to safely add metadata for backports
+        pass
+
+    requires += deps_default
+    classifiers += ['Programming Language :: Python :: {}'.format(v) for v in py_default]
+    project_name = name
+    python_requires = python.get('default_requires', '>=2.6')
 
     if github_name is None:
         project_urls = None

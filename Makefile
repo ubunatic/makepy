@@ -43,11 +43,19 @@ $(PY_DATA_FILE): $(DATA_FILES) Makefile
 		echo '"""'; \
 	done >> $@
 
-IMG     = gcr.io/ubunatic/makepy
-VOLUMES = -v $(CURDIR)/tests:/tests -v $(CURDIR)/examples:/examples
+IMG        = gcr.io/ubunatic/makepy
+VOLUMES    = -v $(CURDIR)/tests:/tests -v $(CURDIR)/examples:/examples
+SHELL_TEST = /tests/test_examples.sh && /tests/test_init.sh
+PYPI_TEST  = pip install makepy && makepy init --trg test1 && cd test1 && makepy
 docker:
 	docker build -t $(IMG) .
-	docker run --rm $(VOLUMES) -it $(IMG) "/tests/test_examples.sh && /tests/test_init.sh"
+	docker run --rm $(VOLUMES) -it $(IMG) "$(SHELL_TEST)"
+
+docker-pypi:
+	docker run --rm $(VOLUMES) -it python:2 bash -ic "$(PYPI_TEST) && $(SHELL_TEST)"
+	docker run --rm $(VOLUMES) -it python:3 bash -ic "$(PYPI_TEST) && $(SHELL_TEST)"
+
+docker-all: docker-test docker-pypi
 
 GCF_BUCKET = ubunatic-functions
 gcf-deploy:

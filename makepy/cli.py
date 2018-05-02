@@ -212,6 +212,20 @@ def include():
 
 def makepypath(): return (abspath(join(here,'..')))
 
+def complement_commands(commands, py=py):
+    # complete dependencies
+    l = commands
+    if 'install' in l or 'dev-install' in l:     l = ['dist']     + l  # any install requires dist
+    if 'dists'   in l or 'dist' in l and py < 3: l = ['backport'] + l  # py2 dist requires backport
+    if 'clean'   in l:                           l = ['clean']    + l  # move clean to front
+
+    # remove dupes, while preserving order of args
+    uniq = []
+    for cmd in l:
+        if cmd not in uniq: uniq.append(cmd)
+
+    return uniq
+
 def main(argv=None):
     # 1. setup defaults for often required options
     common_src = list(data_files) + ['setup.py', 'project.cfg', 'tox.ini', 'README.md']
@@ -260,20 +274,10 @@ def main(argv=None):
     commands = args.commands
     if len(commands) == 0: tox(wheeltag);  return
     if 'help' in commands: help(commands); return
-
-    # complete depended args
-    if 'install' in commands:                 commands = ['dist']     + commands
-    if 'dist'    in commands and args.py < 3: commands = ['backport'] + commands
-    if 'dists'   in commands:                 commands = ['backport'] + commands
-    if 'clean'   in commands:                 commands = ['clean']    + commands  # move clean to front
-
-    # remove dupes, while preserving order of args
-    clean_commands = []
-    for cmd in commands:
-        if cmd not in clean_commands: clean_commands.append(cmd)
+    commands = complement_commands(commands, py=args.py)
 
     # 5. run all passed commands with their shared flags and args
-    for cmd in clean_commands:
+    for cmd in commands:
         if   cmd == 'backport':    backport(args.src, main=args.main)
         elif cmd == 'tox':         tox(args.envlist)
         elif cmd == 'uninstall':   uninstall(args.pkg, py=args.py)
