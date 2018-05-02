@@ -10,11 +10,9 @@ makepy: Handsfree Python Module Programming
 This project provides:
 
 [`makepy`](#makepy-command): A command line tool to simplify Python project setup,
-installation, and testing.
-
+installation, and testing.<br>
 [`makepy.mainlog`](#mainlog-module): A module for making [`logging`][logging]
-and [`structlog`][structlog] setup less cumbersome and less error-prone.
-
+and [`structlog`][structlog] setup less cumbersome and less error-prone.<br>
 [`makepy.argparse`](#argparse-module): A module providing a drop-in `ArgumentParser`
 for writing better readable [`argparse`][argparse] code.
 
