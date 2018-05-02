@@ -12,6 +12,7 @@ tag: bumpversion clean dists
 	git add $(PKG)/__init__.py
 	git commit -m "bump version"
 	git tag v$(shell makepy version)
+	# TODO: add release note support
 
 PY2_WHEEL = $(shell find dist -name '$(PKG)*py2-none-any*.whl')
 PY3_WHEEL = $(shell find dist -name '$(PKG)*py3-none-any*.whl')
