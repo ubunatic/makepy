@@ -15,8 +15,8 @@ installation, and testing.
 [`makepy.mainlog`](#mainlog-module): A module for making [`logging`][logging]
 and [`structlog`][structlog] setup less cumbersome and less error-prone.
 
-[`makepy.argparse`](#argparse-module): An [`argparse`][argparse] drop-in, providing
-a compatible `ArgumentParser` that facilitates better readable `argparse` code.
+[`makepy.argparse`](#argparse-module): A module providing a drop-in `ArgumentParser`
+for writing better readable [`argparse`][argparse] code.
 
 Install via `pip install --user makepy`.
 
