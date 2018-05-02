@@ -178,12 +178,23 @@ def init(trg, pkg, main, envlist=None, force=False):
         NEW_PRJ=prj, TARGET=trg
     ))
 
+r_version = r'(__version__[^0-9]+)([0-9\.]+)([^0-9]+)'
+def version(pkg):
+    init = join(pkg, '__init__.py')
+    with open(init) as f:
+        for line in f:
+            m = re.match(r_version, line)
+            if m is not None:
+                v = m.groups()[1]
+                log.debug('found version: %s==%s', pkg, v)
+                print(v)
+
 def bumpversion(pkg):
     init = join(pkg, '__init__.py')
     lines = []
     with open(init) as f:
         for line in f:
-            m = re.match(r'(__version__[^0-9]+)([0-9\.]+)([^0-9]+)', line)
+            m = re.match(r_version, line)
             if m is not None:
                 pre, version, post = m.groups()
                 ma, mi, pa = version.split('.')
@@ -295,6 +306,7 @@ def main(argv=None):
                                         envlist=args.envlist, force=args.force)
         elif cmd == 'format':      format(args.src, force=args.force)
         elif cmd == 'bumpversion': bumpversion(args.pkg)
+        elif cmd == 'version':     version(args.pkg)
         else:                      raise ValueError('invalid command: {}'.format(cmd))
 
 if __name__ == '__main__': main()
