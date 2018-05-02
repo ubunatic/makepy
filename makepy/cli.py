@@ -178,6 +178,22 @@ def init(trg, pkg, main, envlist=None, force=False):
         NEW_PRJ=prj, TARGET=trg
     ))
 
+def bumpversion(pkg):
+    init = join(pkg, '__init__.py')
+    lines = []
+    with open(init) as f:
+        for line in f:
+            m = re.match(r'(__version__[^0-9]+)([0-9\.]+)([^0-9]+)', line)
+            if m is not None:
+                pre, version, post = m.groups()
+                ma, mi, pa = version.split('.')
+                pa = str(int(pa) + 1)
+                version = '.'.join([ma, mi, pa])
+                log.info('bumpversion to %s', version)
+                line = pre + version + post
+            lines.append(line)
+    with open(init, 'w') as f: f.writelines(lines)
+
 def format(src_files, force=False):
     # TODO: implement modern multi-column-aware unorthodox Python formatter
     print('ATTENTION: Formatting not implemented!')
@@ -274,6 +290,7 @@ def main(argv=None):
         elif cmd == 'init':        init(args.trg, args.pkg, args.main,
                                         envlist=args.envlist, force=args.force)
         elif cmd == 'format':      format(args.src, force=args.force)
+        elif cmd == 'bumpversion': bumpversion(args.pkg)
         else:                      raise ValueError('invalid command: {}'.format(cmd))
 
 if __name__ == '__main__': main()
