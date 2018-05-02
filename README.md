@@ -1,21 +1,31 @@
-![build status](https://storage.googleapis.com/ubunatic-public/makepy/build-status.svg)
+[![pypi version](https://img.shields.io/pypi/v/makepy.svg)](https://pypi.python.org/pypi/makepy)
+[![stage](https://img.shields.io/pypi/status/makepy.svg)](https://pypi.python.org/pypi/makepy)
+[![python versions](https://img.shields.io/pypi/pyversions/makepy.svg)](https://pypi.python.org/pypi/makepy)
+[![build status](https://storage.googleapis.com/ubunatic-public/makepy/build-status.svg)](https://storage.googleapis.com/ubunatic-public/makepy/build-status.json)
+<!--[![license](https://img.shields.io/pypi/l/makepy.svg)](https://pypi.python.org/pypi/makepy)-->
 
 makepy: Handsfree Python Module Programming
 ===========================================
 
 This project provides:
-* `makepy`: A command line tool to simplify Python project setup, installation, and testing.
-* `makepy.mainlog`: A module for making `logging` and `structlog` setup less cumbersome and error-prone.
-* `makepy.argparse.ArgumentParser`: An `argparse`-compatible argument parser that facilitates
-   better readable `argparse` code.
+
+[`makepy`](#makepy-command): A command line tool to simplify Python project setup,
+installation, and testing.
+
+[`makepy.mainlog`](#mainlog-module): A module for making [`logging`][logging]
+and [`structlog`][structlog] setup less cumbersome and less error-prone.
+
+[`makepy.argparse`](#argparse-module): An [`argparse`][argparse] drop-in, providing
+a compatible `ArgumentParser` that facilitates better readable `argparse` code.
 
 Install via `pip install --user makepy`.
 
-makepy.mainlog
+mainlog module
 --------------
 
-As the name suggest, use it only in your main module. Do not setup logging
-outside of main modules! The module's main function is `mainlog.setup_logging`:
+As the name suggest, use [`makepy.mainlog`][mp_mainlog] only in your main module.
+Do not setup logging outside of main modules!
+The module's main function is [`mainlog.setup_logging`][setup_logging]:
 
 ```python
 import logging
@@ -51,13 +61,13 @@ If you use structlog loggers in your modules you also get key-value pairs.
     [debug    ] debug msg                      [structlog] b=('a', 'b', 'c') v=2
     [error    ] error msg                      [structlog] c={'x': 1} v=3
 
-If `colorama` is installed, the logs will be nicely colored.
+If [`colorama`][colorama] is installed, the logs will be nicely colored.
 
-makepy.argparse
+argparse module
 ---------------
 
-For readability `makepy.argparse` provides a compatible `ArgumentParser` that uses
-the 4-letter `opti` and `flag` methods instead the clumsy `add_argument`.
+For readability [`makepy.argparse`][mp_argparse] provides a compatible `ArgumentParser`
+that uses the 4-letter `opti` and `flag` methods instead the clumsy `add_argument`.
 
 ```python
 from makepy import argparse
@@ -72,8 +82,9 @@ p.opti('command',         help='command to run',       choices=['upper','lower']
 
 Using shorter names and nice alignment allows `argparse` code to be much more readable.
 Yes I know, to allow for such multi-column-based coding, you need to disable some linter rules.
-But it's worth it, not just for argparse code, but for better readable Python code in general.
-makepy's `ArgumentParser` also provides a few shortcuts to setup commonly found flags directly:
+But it's worth it, not just for `argparse` code, but for better readable Python code in general.
+makepy's `ArgumentParser` also provides a few shortcuts to setup commonly used related modules
+directly via the following flags:
 
 * `with_debug`:   adds `--debug` flag
 * `with_logging`: automatically sets up logging using `makepy.mainlog` after parsing args
@@ -101,7 +112,7 @@ p.with_input()
 Using the `with_logging` and optionally using `with_debug` allows you to quickly
 setup `logging` or `structlog` loggers with human-readable console output.
 Therefore, `with_logging` supports the same `mode` and `use_structlog` key-value args
-as used by `mainlog.setup_logging` described above.
+as used by `mainlog.setup_logging` described [above](#mainlog-module).
 
 makepy command
 --------------
@@ -123,18 +134,19 @@ Here are some commands supported by `makepy`:
     makepy install    # install the wheel in the system (may require sudo)
     makepy uninstall  # uninstall current project from all pips
 
-The `makepy` command uses a custom `project.cfg`, `tox.ini`, `setup.cfg`, and a generic
-py2-py3+ compatible `setup.py`, as found in this project. It can also be combined with `make`.
+The `makepy` command uses a custom [`project.cfg`][project_cfg], [`tox.ini`][tox_ini],
+[`setup.cfg`][setup_cfg], and a generic py2-py3+ compatible [`setup.py`][setup_py],
+as found in this project. It can also be combined with [`make`][make].
 
 Run `makepy init --trg PATH_TO_NEW_PROJECT` to setup all required files; use `-f` to allow
 overwriting existing files. See `makepy --help` for more options.
 
 makepy + make
 -------------
-Some makepy functionality is still only available via `make`, using the `make/project.mk`,
-`make/vars.mk`, etc. include files. You can still use these in your project. Just copy them
-to a `make` dir in your project and `include` them in your `Makefile`, as done by this project.
-See each mk-file for details and help.
+Some makepy functionality is still only available via [`make`][make], using the
+[`make/project.mk`][make_project], [`make/vars.mk`][make_vars], etc. include files. You can still
+use these in your project. Just copy them to a `make` dir in your project and `include` them
+in your `Makefile`, as [done][makefile] by this project. See each mk-file for details and help.
 
 Goals
 -----
@@ -145,8 +157,9 @@ without breaking flexibility or compatibility of the enhanced modules.
 
 Motivation
 ----------
-Most Python programmers know `argparse`, `logging` or `structlog`, `tox` and `pip`, and
-many also use `twine`, `setuptools`, and others. However, in my projects I have used the
+Most Python programmers know [`argparse`][argparse], [`logging`][logging] or
+[`structlog`][structlog], [`tox`][tox] and [`pip`][pip], and many also use [`twine`][twine],
+[`setuptools`][setuptools], and others. However, in my projects I have used the
 same or very similar code and build chains over and over again when using these tools and
 modules. And since I do not like to repeat myself, I wanted to extract the most common
 practices from my projects and make them available for my next projects and for others to use.
@@ -154,3 +167,23 @@ practices from my projects and make them available for my next projects and for 
 I will keep makepy updated, with future learning and I am happy to welcome pull requests.
 
 Have fun!
+
+[structlog]:     https://github.com/hynek/structlog
+[colorama]:      https://github.com/tartley/colorama
+[logging]:       https://docs.python.org/3/library/logging.html
+[argparse]:      https://docs.python.org/3/library/argparse.html
+[setuptools]:    https://pypi.org/project/setuptools
+[twine]:         https://github.com/pypa/twine
+[tox]:           https://pypi.org/project/tox
+[pip]:           https://pypi.org/project/pip
+[make]:          https://www.gnu.org/software/make
+
+[makefile]:      Makefile
+[project_cfg]:   project.cfg
+[setup_cfg]:     setup.cfg
+[tox_ini]:       tox.ini
+[setup_py]:      setup.py
+[make_project]:  make/project.mk
+[mp_argparse]:   makepy/argparse.py
+[mp_mainlog]:    makepy/mainlog.py
+[setup_logging]: https://github.com/ubunatic/makepy/search?q=setup_logging
