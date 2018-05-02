@@ -25,7 +25,7 @@ uninstall:
 # add some CLI tests
 shell-test:
 	tests/test_examples.sh
-	tests/test_init.sh
+	tests/test_makepy.sh
 
 # re-build the in-line data files if changed
 PY_DATA_FILE  := makepy/__datafiles__.py
@@ -45,17 +45,16 @@ $(PY_DATA_FILE): $(DATA_FILES) Makefile
 
 IMG        = gcr.io/ubunatic/makepy
 VOLUMES    = -v $(CURDIR)/tests:/tests -v $(CURDIR)/examples:/examples
-SHELL_TEST = /tests/test_examples.sh && /tests/test_init.sh
-PYPI_TEST  = pip install --no-cache-dir makepy && makepy init --trg test1 && cd test1 && makepy
-docker:
-	docker build -t $(IMG) .
+SHELL_TEST  = /tests/test_examples.sh && /tests/test_versions.sh
+PYTHON_TEST = /tests/test_examples.sh && /tests/test_makepy.sh
+docker: ; docker build -t $(IMG) .
+docker-test:
 	docker run --rm $(VOLUMES) -it $(IMG) "$(SHELL_TEST)"
-
 docker-pypi:
-	docker run --rm $(VOLUMES) -it python:2 bash -ic "$(PYPI_TEST)"
-	docker run --rm $(VOLUMES) -it python:3 bash -ic "$(PYPI_TEST)"
+	docker run --rm $(VOLUMES) -it python:2 bash -ic "$(PYTHON_TEST)"
+	docker run --rm $(VOLUMES) -it python:3 bash -ic "$(PYTHON_TEST)"
 
-docker-all: docker-test docker-pypi
+docker-all: docker docker-test docker-pypi
 
 GCF_BUCKET = ubunatic-functions
 gcf-deploy:
