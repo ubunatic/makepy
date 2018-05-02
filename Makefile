@@ -46,7 +46,7 @@ $(PY_DATA_FILE): $(DATA_FILES) Makefile
 IMG        = gcr.io/ubunatic/makepy
 VOLUMES    = -v $(CURDIR)/tests:/tests -v $(CURDIR)/examples:/examples
 SHELL_TEST = /tests/test_examples.sh && /tests/test_init.sh
-PYPI_TEST  = pip install makepy && makepy init --trg test1 && cd test1 && makepy
+PYPI_TEST  = pip install --no-cache-dir makepy && makepy init --trg test1 && cd test1 && makepy
 docker:
 	docker build -t $(IMG) .
 	docker run --rm $(VOLUMES) -it $(IMG) "$(SHELL_TEST)"
