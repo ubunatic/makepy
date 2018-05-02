@@ -9,6 +9,8 @@ test-publish:
 	twine upload --repository testpypi dist/*
 
 tag: bumpversion clean dist
+	git add $(PKG)/_init__.py
+	gc -m "bump version"
 	git tag v$(shell makepy version)
 
 PY2_WHEEL = $(shell find dist -name '$(PKG)*py2-none-any*.whl')
