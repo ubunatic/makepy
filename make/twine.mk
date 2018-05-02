@@ -8,7 +8,7 @@ test-publish:
 	# upload to testpypi (needs valid ~/.pypirc)
 	twine upload --repository testpypi dist/*
 
-tag: bumpversion clean dist
+tag: bumpversion clean dists
 	git add $(PKG)/__init__.py
 	git commit -m "bump version"
 	git tag v$(shell makepy version)
