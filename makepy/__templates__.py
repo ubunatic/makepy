@@ -113,10 +113,10 @@ classifiers =
 # default_deps  =
 
 # used to generate Python classifiers
-default           = 3 3.3 3.4 3.5 3.6
-backport          = 2 2.6 2.7
+default         = 2 2.6 2.7 3 3.3 3.4 3.5 3.6
+# backport      = 2 2.6 2.7
 
 # used as python_requires
-backport_requires = >=2.6, <3
-default_requires  = >=3.3'
+default_requires  = >=2.6
+# backport_requires = >=2.6, <3
 """

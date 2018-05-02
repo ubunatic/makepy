@@ -52,8 +52,8 @@ docker:
 	docker run --rm $(VOLUMES) -it $(IMG) "$(SHELL_TEST)"
 
 docker-pypi:
-	docker run --rm $(VOLUMES) -it python:2 bash -ic "$(PYPI_TEST) && $(SHELL_TEST)"
-	docker run --rm $(VOLUMES) -it python:3 bash -ic "$(PYPI_TEST) && $(SHELL_TEST)"
+	docker run --rm $(VOLUMES) -it python:2 bash -ic "$(PYPI_TEST)"
+	docker run --rm $(VOLUMES) -it python:3 bash -ic "$(PYPI_TEST)"
 
 docker-all: docker-test docker-pypi
 
