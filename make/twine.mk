@@ -11,7 +11,7 @@ test-publish:
 tag: bumpversion clean dists
 	git add $(PKG)/__init__.py
 	git commit -m "bump version"
-	git tag v$(shell makepy version)
+	git tag v$(shell $(MAKEPY) version)
 	# TODO: add release note support
 
 PY2_WHEEL = $(shell find dist -name '$(PKG)*py2-none-any*.whl')
