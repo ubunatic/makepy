@@ -16,7 +16,7 @@ include make/project.mk
 include make/tests.mk
 
 # call makepy for project setup tasks
-dist dists backport install dev-install tox bumpversion: ; $(MAKEPY) $@
+dist dists backport install dev-install tox bumpversion: ; $(MAKEPY) $@ -P $(PY)
 
 uninstall:
 	$(MAKEPY) uninstall
@@ -43,8 +43,8 @@ $(PY_DATA_FILE): $(DATA_FILES) Makefile
 		echo '"""'; \
 	done >> $@
 
-IMG        = gcr.io/ubunatic/makepy
-VOLUMES    = -v $(CURDIR)/tests:/tests -v $(CURDIR)/examples:/examples
+IMG         = gcr.io/ubunatic/makepy
+VOLUMES     = -v $(CURDIR)/tests:/tests -v $(CURDIR)/examples:/examples
 SHELL_TEST  = /tests/test_examples.sh && /tests/test_versions.sh
 PYTHON_TEST = /tests/test_examples.sh && /tests/test_makepy.sh
 docker: ; docker build -t $(IMG) .
