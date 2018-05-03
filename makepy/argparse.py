@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import logging, os, sys, argparse
+import logging, os, sys, argparse, re
 from makepy import mainlog
 
 PY2 = sys.version_info.major < 3
@@ -13,20 +13,18 @@ class MakepyParser(argparse.ArgumentParser):
 
     _callbacks = None
     _use_structlog = False
-    _space_repl = None
+    _protect_whitespace = False
 
     # explicitly add most common methods to provide better autocompletion
     parse_args       = argparse.ArgumentParser.parse_args
     parse_known_args = argparse.ArgumentParser.parse_known_args
     add_argument     = argparse.ArgumentParser.add_argument
 
-    def opti(p, *args, **kwargs):             # 4-letter name for key-value arguments
-        if 'help' in kwargs and p._space_repl is not None:
-            content = kwargs['help']
-            kwargs['help'] = content.replace(' ', p._space_repl)
-        return p.add_argument(*args, **kwargs)
+    # 4-letter name for key-value arguments
+    opti = argparse.ArgumentParser.add_argument
 
-    def flag(p, flag, *args, **kwargs):       # 4-letter name for boolean arguments
+    # 4-letter name for boolean arguments
+    def flag(p, flag, *args, **kwargs):
         """flag create command line flag that does not take additional value parameters"""
         if 'action' not in kwargs:
             kwargs['action'] = 'store_true'   # make the option a flag
@@ -42,8 +40,8 @@ class MakepyParser(argparse.ArgumentParser):
         p.add_argument('input', help=help, default=default, nargs=nargs, **argparse_args)
         return p
 
-    def with_protected_spaces(p, space_repl=u'\u00A0'):
-        p._space_repl = space_repl
+    def with_protected_spaces(p):
+        p._protect_whitespace = True
         return p
 
     def with_logging(p, use_structlog=False, mode=mainlog.CONSOLE):
@@ -83,11 +81,18 @@ class MakepyParser(argparse.ArgumentParser):
         p.call_callbacks(args)
         return args, rest
 
-    def _print_message(p, message, file=None, **kwargs):
-        """safely print unicode messages"""
-        if PY2 and message is not None:
-            message = message.encode('utf-8', 'ignore')
-        argparse.ArgumentParser._print_message(p, message, file=file, **kwargs)
+    def _get_formatter(p):
+        f = argparse.ArgumentParser._get_formatter(p)
+        if p._protect_whitespace and p.formatter_class is argparse.HelpFormatter:
+            try: f._whitespace_matcher = re.compile(r'\s')
+            except AttributeError: pass  # ignore errors in case argparse impl. changes
+        return f
+
+    # def _print_message(p, message, file=None, **kwargs):
+    #     """safely print unicode messages"""
+    #     if PY2 and message is not None:
+    #         message = message.encode('utf-8', 'ignore')
+    #     argparse.ArgumentParser._print_message(p, message, file=file, **kwargs)
 
     def fix_narg(p, value, default=()):
         if   value is None:                return default
