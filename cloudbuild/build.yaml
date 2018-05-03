@@ -1,0 +1,7 @@
+steps:
+- name: gcr.io/cloud-builders/docker
+  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/makepy', '.' ]
+- name: gcr.io/$PROJECT_ID/makepy
+  args: [ 'cd tests && ./test_versions.sh && ./test_examples.sh' ]
+
+images: [ 'gcr.io/$PROJECT_ID/makepy' ]

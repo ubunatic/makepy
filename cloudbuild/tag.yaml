@@ -1,0 +1,5 @@
+steps:
+- name: python:2
+  args: [ 'bash', '-ic', 'cd tests && ./test_makepy.sh && ./test_examples.sh' ]
+- name: python:3
+  args: [ 'bash', '-ic', 'cd tests && ./test_makepy.sh && ./test_examples.sh' ]
