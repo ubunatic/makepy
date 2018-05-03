@@ -223,19 +223,29 @@ def include():
 
 def makepypath(): return (abspath(join(here,'..')))
 
-def complement_commands(commands, py=py):
-    # complete dependencies
-    l = commands
-    if 'install' in l or 'dev-install' in l:     l = ['dist']     + l  # any install requires dist
-    if 'dists'   in l or 'dist' in l and py < 3: l = ['backport'] + l  # py2 dist requires backport
-    if 'clean'   in l:                           l = ['clean']    + l  # move clean to front
-
-    # remove dupes, while preserving order of args
+def uniqlist(data):
     uniq = []
-    for cmd in l:
-        if cmd not in uniq: uniq.append(cmd)
-
+    for v in data:
+        if v not in uniq: uniq.append(v)
     return uniq
+
+def add_requirements(commands, py=py):
+    # complete dependencies
+    cmds = commands[:]
+    req3 = [('install',     'dist'),         # system install requires dist
+            ('dists',       'backport')]     # py2 dist requires backport
+    req2 = [('dev-install', 'backport'),     # py2 source install requires backport
+            ('dist',        'backport')]     # py2 dist requires backport
+    req0 = [('clean',       'clean'),        # move clean to front
+            ('bumpversion', 'bumpversion')]  # move bumpversion even before clean
+
+    if py >= 3: req2 = []                    # skip py2 requirements for py3
+
+    for reqs in [req3, req2, req0]:
+        for target, r in reqs:
+            if target in cmds: cmds.insert(0, r)
+
+    return uniqlist(cmds)
 
 def main(argv=None):
     # 1. setup defaults for often required options
@@ -285,7 +295,7 @@ def main(argv=None):
     commands = args.commands
     if len(commands) == 0: tox(wheeltag);  return
     if 'help' in commands: help(commands); return
-    commands = complement_commands(commands, py=args.py)
+    commands = add_requirements(commands, py=args.py)
 
     # 5. run all passed commands with their shared flags and args
     for cmd in commands:
