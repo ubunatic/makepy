@@ -67,4 +67,7 @@ gcf: gcf-deploy
 	sleep 30; $(MAKE) gcf-call
 	sleep 5;  $(MAKE) gcf-logs
 
+gcs-upload:
+	gsutil cp images/makepy-cli.gif gs://ubunatic-public/makepy/makepy-cli.gif
+
 include make/twine.mk
