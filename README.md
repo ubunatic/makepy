@@ -117,20 +117,31 @@ makepy command
 There is also a `makepy` command that I use to automate project creation, incremental
 building, testing via `tox`, and uploading to PyPi.
 
+![makepy cast](https://storage.googleapis.com/ubunatic-public/makepy/makepy-cli.gif)
+
 Here are some commands supported by `makepy`:
 
     makepy init --trg ~/workspace/newproject # setup new python project
     cd ~/workspace/newproject                # enter new project
 
-    makepy backport   # backport project to python2
-    tox -e py3        # install the current version in testenv and run tests
-    tox               # install and test in all testenvs
-    makepy            # install and test the default testenv
-    makepy clean      # cleanup test environments
+    makepy backport     # backport project to python2
+    tox -e py3          # install the current version in testenv and run tests
+    tox                 # install and test in all testenvs
+    makepy              # install and test the default testenv
+    makepy clean        # cleanup test environments
 
-    makepy dist       # build python wheel for project
-    makepy install    # install the wheel in the system (may require sudo)
-    makepy uninstall  # uninstall current project from all pips
+    makepy dist         # build python wheel for current project
+    makepy dist -P 2    # build python wheel for python2
+    makepy dists        # build both wheels for python2 and python3
+    makepy version      # read version string from main __init__.py
+    makepy bumpversion  # increase patch level in main __init__.py
+    makepy install      # pip install the wheel in the system (may require sudo)
+    makepy dev-install  # pip install the current source code in the system
+    makepy uninstall    # uninstall current project from all pips
+
+You can also chain commands: `makepy clean bumpversion dists`, and `makepy` will reorder
+them and add all required dependent commands, e.g., `makepy install -P 2` is equivalent
+to `makepy backport dist install -P 2`.
 
 The `makepy` command uses a custom [`project.cfg`][project_cfg], [`tox.ini`][tox_ini],
 [`setup.cfg`][setup_cfg], and a generic py2-py3+ compatible [`setup.py`][setup_py],
@@ -150,8 +161,8 @@ Goals
 -----
 In general the project aims to provide a few flexible tools and modules that should help with daily
 Python programming tasks, when developing your own Python modules, libaries, and command line tools.
-It aims to capture best practices and make them reusable, allowing you to write less and more readable code,
-without breaking flexibility or compatibility of the enhanced modules.
+It aims to capture best practices and make them reusable, allowing you to write less and more
+readable code, without breaking flexibility or compatibility of the enhanced modules.
 
 Motivation
 ----------
@@ -162,7 +173,18 @@ same or very similar code and build chains over and over again when using these 
 modules. And since I do not like to repeat myself, I wanted to extract the most common
 practices from my projects and make them available for my next projects and for others to use.
 
-I will keep makepy updated, with future learning and I am happy to welcome pull requests.
+History
+-------
+Most of the `makepy` commands lived in a huge `Makefile` that had to be copied and augmented
+from project to project, before they were ported to `makepy`. A few still remain in this
+project's `mk` files, such as the `make tag` and `make publish`.
+
+The utility modules to setup `logging` and `argparse`, were scattered in several private
+projects (and reimplemented in corporate projects). I the future I hope to enhance them
+with extra goodies that still remain in these projects, such as a `stackdriver` logging
+mode for the `argparse` module.
+
+I will keep `makepy` updated, with future learnings and I am happy to welcome pull requests.
 
 Have fun!
 
