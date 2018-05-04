@@ -16,7 +16,7 @@ include make/project.mk
 include make/tests.mk
 
 # call makepy for project setup tasks
-dist dists backport install dev-install tox bumpversion: ; $(MAKEPY) $@ -P $(PY)
+dist dists backport install dev-install tox bumpversion: ; $(MAKEPY) $@
 
 uninstall:
 	$(MAKEPY) uninstall
