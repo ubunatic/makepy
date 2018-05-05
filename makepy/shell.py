@@ -10,6 +10,8 @@ def arglist(args, more_args=()):
     if type(args) not in (list,tuple): args = args.split(' ')
     return list(args) + list(more_args)
 
+def argstr(args): return ' '.join(str(a) for a in args)
+
 def unpad(text):
     pads = re.findall(r'^[ ]+', text, flags=re.MULTILINE)
     if text.strip() == '' or len(pads) == 0: return text
@@ -21,11 +23,13 @@ def block(string, *args, **kwargs):
     return str(unpad(string).strip() + '\n')
 
 def run(args, *more_args, **PopenArgs):
-    return subprocess.check_call(arglist(args, more_args), **PopenArgs)
+    args = arglist(args, more_args)
+    log.debug("run: %s, %s", argstr(args), PopenArgs)
+    return subprocess.check_call(args, **PopenArgs)
 
 def call(args, *more_args, **PopenArgs):
     args = arglist(args, more_args)
-    log.debug('call: subprocess.check_output(%s)', args)
+    log.debug("call: %s, %s", argstr(args), PopenArgs)
     return subprocess.check_output(args, **PopenArgs)
 
 def call_unsafe(args, *more_args, **PopenArgs):
@@ -38,14 +42,18 @@ def rm(*args):
     for f in args: sh.rmtree(f, ignore_errors=True)
 
 def touch(*args):
+    log.debug("touch %s", argstr(args))
     for f in args:
         with open(f, 'a'): pass
 
-def ls(dirname=None): return os.listdir(dirname)
+def ls(dirname=None):
+    log.debug("ls %s", dirname)
+    return os.listdir(dirname)
 
 def cp(args, *more_args, **kwargs):
     force = kwargs.get('force', False)
     args = arglist(args, more_args)
+    log.debug("cp %s, %s", argstr(args), kwargs)
     dest = args.pop()
     for f in args:
         trg = join(dest, f)
@@ -55,11 +63,12 @@ def cp(args, *more_args, **kwargs):
         else: raise ValueError("invalid file: {}".format(f))
         exists = os.path.exists(trg)
         if not exists or force: fn(f, trg)
-        if exists and force: log.debug('copied %s -> %s: overwritten', f, trg)
-        elif exists:         log.debug('skipped %s -> %s: exists', f, trg)
-        else:                log.debug('copied %s -> %s: copied', f, trg)
+        if exists and force: log.debug('copied %s -> %s: target overwritten', f, trg)
+        elif exists:         log.debug('skipped %s -> %s: target exists', f, trg)
+        else:                log.debug('copied %s -> %s', f, trg)
 
 def mkdir(*paths):
+    log.debug("mkdir %s", argstr(paths))
     try: os.makedirs(join(*paths))
     except OSError: pass
 
