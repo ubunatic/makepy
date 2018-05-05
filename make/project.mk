@@ -45,3 +45,7 @@ pyclean:
 	find . -name '*.py[co]'    -delete
 	find . -name '__pycache__' -delete
 
+copy:
+	test -n "$(TRG)"           # ensure the copy target is set
+	mkdir $(TRG)/make          # create make dir in target dir
+	cp make/*.mk $(TRG)/make/  # copy all mk files
