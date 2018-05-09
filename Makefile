@@ -6,7 +6,7 @@ clean: pyclean-all      # clean up anything
 
 # re-build the in-line datafiles if changed using makepy:datafiles target
 PY_DATAFILE := makepy/__datafiles__.py
-DATA_FILES  := setup.cfg setup.py .gitignore LICENSE.txt
+DATA_FILES  := setup.cfg setup.py .gitignore $(wildcard ./make/*)
 # ensure datafiles are updated before running makepy or tests
 $(MAKEPY_COMMANDS) test: datafile
 

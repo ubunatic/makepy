@@ -61,16 +61,22 @@ copy:
 PY_DATAFILE = $(PKG)/__datafiles__.py
 DATA_FILES  = $(wildcard ./datafiles)
 datafile: $(PY_DATAFILE)
-$(PY_DATAFILE): $(DATA_FILES) Makefile
+$(PY_DATAFILE): $(DATA_FILES) Makefile make/project.mk
 	test -n "$(PY_DATAFILE)"  # ensure the target PY_DATAFILE is set
 	test -n "$(DATA_FILES)"   # ensure some DATA_FILES are defined
 	echo "# flake8:noqa=W191"                      >  $@
 	echo "from __future__ import unicode_literals" >> $@
-	echo "data_files = {}"                         >> $@
+	echo "datafiles = {}"                          >> $@
+	echo "datadirs = set()"                        >> $@
 	for f in $(DATA_FILES); do \
+		dir=`dirname $$f`; dir=`basename $$dir` \
 		base=`basename $$f`; \
-		var=`echo $$base | $(FILE2VAR)`; \
-		echo "data_files['$$base'] = $$var =" '"""'; \
+		if test "$$dir" = "." -o -z "$$dir"; \
+		then dir="";      psep="";  vsep=""; \
+		else dir="$$dir"; psep="/"; vsep="_"; echo "datadirs.add('$$dir')"; \
+		fi; \
+		var=`echo "$$dir$$vsep$$base" | $(FILE2VAR)`; \
+		echo "datafiles['$$dir$$psep$$base'] = $$var =" '"""'; \
 		cat $$f | sed 's#"""#\\"\\"\\"#g'; \
 		echo '"""'; \
 	done                                           >> $@

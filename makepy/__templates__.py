@@ -18,10 +18,10 @@ whitelist_externals = makepy
 """
 
 templates['Makefile'] = Makefile = """
-MAIN         := {MAIN}
-TEST_SCRIPTS := {MAIN} -h
-include make/vars.mk
-include make/project.mk
+MAIN        := {MAIN}
+SCRIPT_TEST := {MAIN} -h
+
+# include make/makepy.mk
 
 test: my-test
 my-test:
@@ -29,11 +29,12 @@ my-test:
 
 build-something: $(SRC_FILES)
 \t# use makepys make variables to define make dependencies to the source code
+"""
 
+makefile_comment = """
 # Selection of Included Targets
 # =============================
 # make vars         # see most important makepy make vars
-# make dev-install  # install the current version directly from the source
 # make test         # run tests directly without tox and also run script tests
 # make publish      # sign and upload to PyPi
 # make docker-test  # pip install and test the PyPi version of your package in docker
@@ -115,4 +116,26 @@ classifiers =
 # supported versions
 versions        = 2 2.6 2.7 3 3.3 3.4 3.5 3.6
 python_requires = >=2.6
+"""
+
+templates['LICENSE_txt'] = LICENSE_txt = """
+Copyright (c) {YEAR} {NAME} {GITHUB_NAME}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 """

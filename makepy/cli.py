@@ -2,7 +2,7 @@ from builtins import open, str
 import sys, os, re, logging
 from datetime import datetime
 from glob import glob
-from makepy.__datafiles__ import data_files
+from makepy.__datafiles__ import datadirs, datafiles
 from makepy.__templates__  import templates
 from makepy import argparse
 from makepy.tox import tox, clean
@@ -85,8 +85,9 @@ def test(tests=None, py=py):
 def copy_tools(trg, force=False):
     mkdir(trg)
     # create project tools that do not have any custom code
-    for f, text in data_files.items(): write_file(f, trg, text)
-    log.info('copied tools: %s -> %s', list(data_files) + ['setup.py'], trg)
+    for d in datadirs: mkdir(join(trg,d))
+    for f, text in datafiles.items(): write_file(f, trg, text)
+    log.info('copied tools: %s -> %s', list(datafiles) + ['setup.py'], trg)
 
 def write_file(name, trg_dir, text, force=False, strip=True, **fmt):
     trg = join(trg_dir, name)
@@ -117,20 +118,22 @@ def generate_packagefiles(pkg_dir, main):
 def user_name():
     name = call_unsafe('git config --get user.name').strip()
     if name == '': name = os.environ.get('USER','System Root')
-    return name
+    return '{}'.format(name)
 
-def safe_name(): return re.sub(r'[^a-z0-9_\.]', str('.'), str(user_name()))
+def safe_name(): return re.sub(r'[^a-z0-9_\.]', '.', user_name())
 
-def github_name(): return os.environ.get('GITHUB_NAME', '@' + safe_name())
+def github_name(): return os.environ.get('GITHUB_NAME', '@{}'.format(safe_name()))
 
 def user_email():
     email = call_unsafe('git config --get user.email').strip()
     if email == '': email = safe_name() + '@gmail.com'
-    return email
+    return '{}'.format(email)
 
 def date(fmt='%Y-%m-%d', dt=None):
     if dt is None: dt = datetime.utcnow()
     return dt.strftime(fmt)
+
+def year(): return datetime.utcnow().year
 
 def generate_readme(trg, prj):
     COPY_INFO = 'Copyright (c) {} {} {}'.format(date('%Y'), user_name(), user_email())
@@ -143,6 +146,12 @@ def generate_project_cfg(trg, prj):
                EMAIL = user_email(),
                GITHUB_NAME = github_name(),
                PROJECT = prj)
+
+def generate_license_txt(trg):
+    write_file('LICENSE.txt', trg, templates['LICENSE_txt'],
+               NAME = user_name(),
+               YEAR = year(),
+               GITHUB_NAME = github_name())
 
 def generate_tests(trg,prj):
     test_dir  = join(trg, 'tests')
@@ -164,6 +173,7 @@ def init(trg, pkg, main, envlist=None, force=False):
     generate_readme(trg, prj)
     generate_tests(trg, prj)
     generate_project_cfg(trg, prj)
+    generate_license_txt(trg)
     log.info('done:\n%s', block(
         """
         -------------------------------------------
@@ -249,7 +259,7 @@ def add_requirements(commands, py=py):
 
 def main(argv=None):
     # 1. setup defaults for often required options
-    common_src = list(data_files) + ['setup.py', 'project.cfg', 'tox.ini', 'README.md']
+    common_src = list(datadirs) + list(datafiles) + ['setup.py', 'project.cfg', 'tox.ini', 'README.md']
     src = [basename(abspath('.'))] + common_src
     # 2. create the parser with common options
     p = argparse.MakepyParser().with_logging().with_debug().with_protected_spaces()
