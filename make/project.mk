@@ -77,6 +77,6 @@ $(PY_DATAFILE): $(DATA_FILES) Makefile make/project.mk
 		fi; \
 		var=`echo "$$dir$$vsep$$base" | $(FILE2VAR)`; \
 		echo "datafiles['$$dir$$psep$$base'] = $$var =" '"""'; \
-		cat $$f | sed 's#"""#\\"\\"\\"#g'; \
+		cat $$f | sed 's#\\#\\\\#g' | sed 's#"""#\\"\\"\\"#g'; \
 		echo '"""'; \
 	done                                           >> $@

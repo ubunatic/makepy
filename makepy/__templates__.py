@@ -21,7 +21,7 @@ templates['Makefile'] = Makefile = """
 MAIN        := {MAIN}
 SCRIPT_TEST := {MAIN} -h
 
-# include make/makepy.mk
+include make/makepy.mk
 
 test: my-test
 my-test:

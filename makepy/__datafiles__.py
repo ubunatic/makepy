@@ -74,8 +74,8 @@ PKG  = $(notdir $(basename $(CURDIR)))
 MAIN = $(PKG)
 
 # main python vars, defining python and pip binaries
-_GET_MAJOR = 'import sys; sys.stdout.write(str(sys.version_info.major) + "\n")'
-_GET_MINOR = 'import sys; sys.stdout.write(str(sys.version_info.minor) + "\n")'
+_GET_MAJOR = 'import sys; sys.stdout.write(str(sys.version_info.major) + "\\n")'
+_GET_MINOR = 'import sys; sys.stdout.write(str(sys.version_info.minor) + "\\n")'
 PY     := $(shell python -c $(_GET_MAJOR)).$(shell python -c $(_GET_MINOR))
 PYTHON = python$(PY)
 PIP    = $(PYTHON) -m pip
@@ -99,7 +99,7 @@ SRC_FILES = $(PKG) $(PRJ_TESTS) $(PRJ_FILES)
 # utils and help vars
 NOL       = 1>/dev/null  # mute stdout
 NEL       = 2>/dev/null  # mute stderr
-FILE2VAR  = sed 's/[^A-Za-z0-9_]\+/_/g'
+FILE2VAR  = sed 's/[^A-Za-z0-9_]\\+/_/g'
 
 """
 datadirs.add('make')
@@ -121,7 +121,7 @@ datafiles['make/tests.mk'] = make_tests_mk = """
 # Make sure the setup the __init__.py correctly. We can then use the module to setup
 # generic import and cli tests. Override the following vars as needed.
 CLI_TEST     = $(PYTHON) -m $(MAIN) -h $(NOL)
-IMPORT_TEST  = $(PYTHON) -c "import $(MAIN) as m; print(\"version:\",m.__version__,\"tag:\",m.__tag__)"
+IMPORT_TEST  = $(PYTHON) -c "import $(MAIN) as m; print(\\"version:\\",m.__version__,\\"tag:\\",m.__tag__)"
 DIST_TEST    = $(IMPORT_TEST); $(CLI_TEST)
 BASH         = bash -it -o errexit -c
 
@@ -226,17 +226,17 @@ $(PY_DATAFILE): $(DATA_FILES) Makefile make/project.mk
 	echo "from __future__ import unicode_literals" >> $@
 	echo "datafiles = {}"                          >> $@
 	echo "datadirs = set()"                        >> $@
-	for f in $(DATA_FILES); do \
-		dir=`dirname $$f`; dir=`basename $$dir` \
-		base=`basename $$f`; \
-		if test "$$dir" = "." -o -z "$$dir"; \
-		then dir="";      psep="";  vsep=""; \
-		else dir="$$dir"; psep="/"; vsep="_"; echo "datadirs.add('$$dir')"; \
-		fi; \
-		var=`echo "$$dir$$vsep$$base" | $(FILE2VAR)`; \
-		echo "datafiles['$$dir$$psep$$base'] = $$var =" '\"\"\"'; \
-		cat $$f | sed 's#\"\"\"#\\"\\"\\"#g'; \
-		echo '\"\"\"'; \
+	for f in $(DATA_FILES); do \\
+		dir=`dirname $$f`; dir=`basename $$dir` \\
+		base=`basename $$f`; \\
+		if test "$$dir" = "." -o -z "$$dir"; \\
+		then dir="";      psep="";  vsep=""; \\
+		else dir="$$dir"; psep="/"; vsep="_"; echo "datadirs.add('$$dir')"; \\
+		fi; \\
+		var=`echo "$$dir$$vsep$$base" | $(FILE2VAR)`; \\
+		echo "datafiles['$$dir$$psep$$base'] = $$var =" '\"\"\"'; \\
+		cat $$f | sed 's#\\\\#\\\\\\\\#g' | sed 's#\"\"\"#\\\\"\\\\"\\\\"#g'; \\
+		echo '\"\"\"'; \\
 	done                                           >> $@
 """
 datadirs.add('make')
