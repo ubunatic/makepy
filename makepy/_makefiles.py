@@ -250,5 +250,4 @@ $(MAKEPY_COMMANDS): ; $(MAKEPY) $@
 # TODO: handle egg removal in makepy
 uninstall: ; $(MAKEPY) uninstall && rm -rf *.egg-info
 
-
 """
