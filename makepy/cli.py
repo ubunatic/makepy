@@ -92,12 +92,14 @@ def copy_tools(trg, force=False, mkfiles=False):
     if mkfiles: files.update(makefiles); dirs += list(makedirs)
     # create project tools that do not have any custom code
     for d in dirs: mkdir(join(trg,d))
-    for f, text in files.items(): write_file(f, trg, text)
+    for f, text in files.items(): write_file(f, trg, text, force=force)
     log.info('copied tools: %s -> %s', list(files) + ['setup.py'], trg)
 
 def write_file(name, trg_dir, text, force=False, strip=True, **fmt):
     trg = join(trg_dir, name)
-    if isfile(trg) and not force: return
+    if isfile(trg) and not force:
+        log.debug('skipping to write: %s', trg)
+        return
     if strip: text = '{}\n'.format(text.strip())
     if len(fmt) > 0: text = text.format(**fmt)
     with open(trg, 'w') as f: f.write(str(text))
@@ -123,6 +125,7 @@ def generate_packagefiles(pkg_dir, main):
 
 def user_name():
     name = call_unsafe('git config --get user.name').strip()
+    log.debug('git user.name: %s', name)
     if name == '': name = os.environ.get('USER','System Root')
     return '{}'.format(name)
 
@@ -234,11 +237,11 @@ def embed(src_files, target, force=False):
         return
     log.info('embedding %s in %s', src_files, target)
     with open(target, 'w') as f:
-        pre = str('# flake8:noqa=W191\n'
-                  'from __future__ import unicode_literals\n'
-                  'files = {}\n'
-                  'dirs  = set()\n')
-        f.write(pre)
+        pre = ('# flake8:noqa=W191\n'
+               'from __future__ import unicode_literals\n'
+               'files = {}\n'
+               'dirs  = set()\n')
+        f.write(str(pre))
         for p in src_files:
             if p.startswith('./'): p = p[2:]
             d = dirname(p); code = '\n'

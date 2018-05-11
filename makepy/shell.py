@@ -44,7 +44,8 @@ def run(args, *more_args, **PopenArgs):
 def call(args, *more_args, **PopenArgs):
     args = arglist(args, more_args)
     log.debug("call: %s, %s", argstr(args), PopenArgs)
-    return subprocess.check_output(args, **PopenArgs)
+    res = subprocess.check_output(args, **PopenArgs)
+    return str(res)
 
 def call_unsafe(args, *more_args, **PopenArgs):
     try: return call(args, *more_args, **PopenArgs)

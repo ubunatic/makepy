@@ -13,7 +13,7 @@
 # can call makepy commands and custom targets together: `make <makepy-command> <custom-target>`.
 # It also includes all other mk files so that you only need to `include make/makepy.mk`
 
-.PHONY: dists install dev-install tox bumpversion version
+.PHONY: dist backport dists install dev-install tox bumpversion version
 
 include make/vars.mk
 
