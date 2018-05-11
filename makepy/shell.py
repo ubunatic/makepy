@@ -1,4 +1,5 @@
-from builtins import str, open as _open
+from builtins import open as _open
+from builtins import str
 import subprocess, re, logging, os, sys
 from contextlib import contextmanager
 import shutil as sh
@@ -14,7 +15,7 @@ def arglist(args, more_args=()):
 def argstr(args): return ' '.join(str(a) for a in args)
 
 @contextmanager
-def open(filename, mode='r', **kwargs):
+def open(filename, mode='r', **kwargs):  # flake8:noqa=F811
     try:
         if filename == '-':
             if 'r' in mode: fh = sys.stdin
