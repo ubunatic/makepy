@@ -1,4 +1,4 @@
-.PHONY: default clean dist dists backport install uninstall tox shell-test
+.PHONY: all clean datafiles test docker gcf
 
 all: clean test         # define default target before anything else
 include make/makepy.mk  # include all makepy vars and targets
@@ -46,4 +46,10 @@ gcf: gcf-deploy
 	sleep 5;  $(MAKE) gcf-logs
 gcs-upload:
 	gsutil cp images/makepy-cli.gif gs://ubunatic-public/makepy/makepy-cli.gif
+
+DEMO = docker run -it $(TEST_VOLUMES) -v $(CURDIR)/.vol:/tmp/prj $(IMG)
+CMD  = 'bash -i'
+.vol: ; mkdir .vol
+docker-demo:  .vol; $(DEMO) 'cd /tmp/prj && /tests/test_project.sh myapp'
+docker-login: .vol; $(DEMO) $(CMD)
 

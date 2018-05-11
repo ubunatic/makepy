@@ -45,5 +45,5 @@ dist-test:
 TEST_IMG     = python:$(PY)
 TEST_VOLUMES = -v $(CURDIR)/tests:/tests
 docker-test:
-	docker run -it $(TEST_VOLUMES) $(TEST_IMG) $(BASH) 'pip install $(PKG); $(DIST_TEST)'
+	docker run -it $(TEST_VOLUMES) $(TEST_IMG) 'set -o errexit; pip install $(PKG); $(DIST_TEST)'
 

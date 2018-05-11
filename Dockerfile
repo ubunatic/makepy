@@ -10,6 +10,7 @@ ENV REQUIREMENTS "tox<=2.5.0" \
                  "wheel<=0.31.0"
 
 ENV WORKDIR /workspace/makepy
+ENV PATH    $PATH:$HOME/root/.local/bin
 
 RUN apk add --no-cache -U \
        bash bash-completion git make ca-certificates \
@@ -18,6 +19,10 @@ RUN apk add --no-cache -U \
        py2-pip    py3-pip \
        && pip2 install $REQUIREMENTS \
        && pip3 install $REQUIREMENTS
+
+# add extras
+RUN apk add py-pygments
+RUN echo "alias ccat=pygmentize" >> /root/.bashrc
 
 RUN mkdir -p $WORKDIR
 WORKDIR $WORKDIR

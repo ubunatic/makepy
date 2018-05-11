@@ -126,9 +126,9 @@ def user_name():
     if name == '': name = os.environ.get('USER','System Root')
     return '{}'.format(name)
 
-def safe_name(): return re.sub(r'[^a-z0-9_\.]', '.', user_name())
+def safe_name(): return re.sub(r'[^a-z0-9_\.-]', '.', user_name().lower())
 
-def github_name(): return os.environ.get('GITHUB_NAME', '@{}'.format(safe_name()))
+def github_name(): return os.environ.get('GITHUB_NAME', '{}'.format(safe_name()))
 
 def user_email():
     email = call_unsafe('git config --get user.email').strip()
@@ -157,7 +157,7 @@ def generate_license_txt(trg):
     write_file('LICENSE.txt', trg, templates['LICENSE_txt'],
                NAME = user_name(),
                YEAR = year(),
-               GITHUB_NAME = github_name())
+               GITHUB_NAME = '@{}'.format(github_name()))
 
 def generate_tests(trg,prj):
     test_dir  = join(trg, 'tests')
@@ -288,7 +288,8 @@ def add_requirements(commands, py=py):
 
 def main(argv=None):
     # 1. setup defaults for often required options
-    common_src = list(datadirs) + list(datafiles) + ['setup.py', 'project.cfg', 'tox.ini', 'README.md']
+    template_src = ['project.cfg', 'tox.ini', 'README.md', 'LICENSE.txt']
+    common_src = list(datadirs) + list(datafiles) + template_src
     src = [basename(abspath('.'))] + common_src
     # 2. create the parser with common options
     p = argparse.MakepyParser().with_logging().with_debug().with_protected_spaces()

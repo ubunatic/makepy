@@ -51,4 +51,5 @@ backport
 __pycache__
 *.pyc
 *.pyo
+.vol
 """
