@@ -46,5 +46,4 @@ SRC_FILES = $(PKG) $(PRJ_TESTS) $(PRJ_FILES)
 # utils and help vars
 NOL       = 1>/dev/null  # mute stdout
 NEL       = 2>/dev/null  # mute stderr
-FILE2VAR  = sed 's/[^A-Za-z0-9_]\+/_/g'
 

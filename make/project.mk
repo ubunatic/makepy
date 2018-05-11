@@ -15,7 +15,7 @@
 # pyclean: remove pyc and other cached files
 # copy:    copy all mk files to a new project
 
-.PHONY: vars pyclean pyclean-all copy datafile
+.PHONY: vars pyclean pyclean-all copy
 
 # Printing make vars can be helpful when testing multiple Python versions.
 vars:
@@ -55,28 +55,3 @@ copy:
 	mkdir -p $(TRG)/make       # create TRG/make dir in target dir
 	cp make/*.mk $(TRG)/make/  # copy all mk files to TRG/make
 
-# TODO: move datafile generation to makepy
-# use the datafile target to concat plain text files into
-# a python file (useful for templating, etc.)
-PY_DATAFILE = $(PKG)/__datafiles__.py
-DATA_FILES  = $(wildcard ./datafiles)
-datafile: $(PY_DATAFILE)
-$(PY_DATAFILE): $(DATA_FILES) Makefile make/project.mk
-	test -n "$(PY_DATAFILE)"  # ensure the target PY_DATAFILE is set
-	test -n "$(DATA_FILES)"   # ensure some DATA_FILES are defined
-	echo "# flake8:noqa=W191"                      >  $@
-	echo "from __future__ import unicode_literals" >> $@
-	echo "datafiles = {}"                          >> $@
-	echo "datadirs = set()"                        >> $@
-	for f in $(DATA_FILES); do \
-		dir=`dirname $$f`; dir=`basename $$dir` \
-		base=`basename $$f`; \
-		if test "$$dir" = "." -o -z "$$dir"; \
-		then dir="";      psep="";  vsep=""; \
-		else dir="$$dir"; psep="/"; vsep="_"; echo "datadirs.add('$$dir')"; \
-		fi; \
-		var=`echo "$$dir$$vsep$$base" | $(FILE2VAR)`; \
-		echo "datafiles['$$dir$$psep$$base'] = $$var =" '"""'; \
-		cat $$f | sed 's#\\#\\\\#g' | sed 's#"""#\\"\\"\\"#g'; \
-		echo '"""'; \
-	done                                           >> $@

@@ -1,14 +1,18 @@
-from builtins import open, str
+from builtins import str
 import sys, os, re, logging
 from datetime import datetime
 from glob import glob
-from makepy.__datafiles__ import datadirs, datafiles
-from makepy.__templates__  import templates
 from makepy import argparse
 from makepy.tox import tox, clean
 from os.path import join, isfile, dirname, abspath, basename
+from makepy.shell import run, cp, call_unsafe, sed, mkdir, rm, block, open
 
-from makepy.shell import run, cp, call_unsafe, sed, mkdir, rm, block
+# load files and templates
+from makepy._templates import templates
+try:    from makepy._datafiles import dirs as datadirs, files as datafiles
+except: datafiles = {}; datadirs = set()
+try:    from makepy._makefiles import dirs as makedirs, files as makefiles
+except: makefiles = {}; makedirs = set()
 
 log = logging.getLogger('makepy')
 
@@ -82,17 +86,19 @@ def test(tests=None, py=py):
     if tests is None: tests = 'tests'
     run(python(py) + ' -m pytest -xv', tests)
 
-def copy_tools(trg, force=False):
+def copy_tools(trg, force=False, mkfiles=False):
     mkdir(trg)
+    files = datafiles.copy(); dirs = list(datadirs)
+    if mkfiles: files.update(makefiles); dirs += list(makedirs)
     # create project tools that do not have any custom code
-    for d in datadirs: mkdir(join(trg,d))
-    for f, text in datafiles.items(): write_file(f, trg, text)
-    log.info('copied tools: %s -> %s', list(datafiles) + ['setup.py'], trg)
+    for d in dirs: mkdir(join(trg,d))
+    for f, text in files.items(): write_file(f, trg, text)
+    log.info('copied tools: %s -> %s', list(files) + ['setup.py'], trg)
 
 def write_file(name, trg_dir, text, force=False, strip=True, **fmt):
     trg = join(trg_dir, name)
     if isfile(trg) and not force: return
-    if strip: text = text.strip() + '\n'
+    if strip: text = '{}\n'.format(text.strip())
     if len(fmt) > 0: text = text.format(**fmt)
     with open(trg, 'w') as f: f.write(str(text))
 
@@ -161,12 +167,12 @@ def generate_tests(trg,prj):
     mkdir(test_dir)
     write_file(test_file, test_dir, test_code)
 
-def init(trg, pkg, main, envlist=None, force=False):
+def init(trg, pkg, main, envlist=None, force=False, mkfiles=False):
     assert None not in (trg, pkg)
     pkg_dir = join(trg, pkg)
     prj = re.sub('[^A-Za-z0-9_-]+','-', basename(abspath(trg)))
     mkdir(pkg_dir)
-    copy_tools(trg, force=force)
+    copy_tools(trg, force=force, mkfiles=mkfiles)
     generate_makefile(trg, main)
     generate_toxini(trg, envlist)
     generate_packagefiles(pkg_dir, main)
@@ -222,6 +228,29 @@ def format(src_files, force=False):
         if not f.endswith('.py'): print('skipping:', f); continue
         print('Fake formatting:', f, 'OK')
 
+def embed(src_files, target, force=False):
+    if isfile(target) and not force:
+        log.debug('skippig to overwrite embedding target %s', target)
+        return
+    log.info('embedding %s in %s', src_files, target)
+    with open(target, 'w') as f:
+        pre = str('# flake8:noqa=W191\n'
+                  'from __future__ import unicode_literals\n'
+                  'files = {}\n'
+                  'dirs  = set()\n')
+        f.write(pre)
+        for p in src_files:
+            if p.startswith('./'): p = p[2:]
+            d = dirname(p); code = '\n'
+            if d in ('.',''): p = basename(p)
+            else:             code += "dirs.add('{d}')\n".format(d=d)
+            with open(p) as src: text = src.read()
+            t = text.replace('\\', '\\\\').replace('"""','\\"\\"\\"').replace('\t', '\\t')
+            v = re.sub(r'[^a-zA-Z0-9_]+', '_', p)
+            code += "files['{p}'] = {v} = {q}\n{t}{q}\n".format(p=p, v=v, t=t, q='"""')
+            log.debug('embed %s -> %s (%dchr)', p, target, len(text))
+            f.write(str(code))
+
 def help(commands):
     # TODO: implement contextual help
     print('ATTENTION: Contextual help is work-in-progress!')
@@ -264,29 +293,34 @@ def main(argv=None):
     # 2. create the parser with common options
     p = argparse.MakepyParser().with_logging().with_debug().with_protected_spaces()
     # 3. setup all flags, commands, etc. as aligned one-liners
-    p.opti('commands',        help='makepy command', nargs='*', default=[], metavar='CMD')
-    p.flag('tox',             help='run tox tests')
-    p.flag('backport',        help='backport project to Python 2')
-    p.flag('uninstall',       help='uninstall package from all pips')
-    p.flag('clean',           help='clean build files')
-    p.flag('test',            help='run unit tests directly')
-    p.flag('lint',            help='lint source code')
-    p.flag('dist',            help='build the wheel')
-    p.flag('dists',           help='build all the wheels')
-    p.flag('install',         help='build and install the wheel')
-    p.flag('dev-install',     help='directly install the source code in the current environment')
-    p.flag('init',            help='create makepy files in a new project')
-    p.flag('include',         help='print makepy Makefile location (usage: `include $(shell makepy include)`)')
-    p.flag('path',            help='print PYHTONPATH to use makepy as module')
-    p.flag('format',          help='format python source files using makepy column-aligned formatter')
+    p.opti('commands',    help='makepy command', nargs='*', default=[], metavar='CMD')
+    p.flag('tox',         help='run tox tests')
+    p.flag('backport',    help='backport project to Python 2')
+    p.flag('uninstall',   help='uninstall package from all pips')
+    p.flag('clean',       help='clean build files')
+    p.flag('test',        help='run unit tests directly')
+    p.flag('lint',        help='lint source code')
+    p.flag('dist',        help='build the wheel')
+    p.flag('dists',       help='build all the wheels')
+    p.flag('install',     help='build and install the wheel')
+    p.flag('dev-install', help='directly install the source code in the current environment')
+    p.flag('init',        help='create makepy files in a new project')
+    p.flag('include',     help='print makepy Makefile location (usage: `include $(shell makepy include)`)')
+    p.flag('path',        help='print PYHTONPATH to use makepy as module')
+    p.flag('format',      help='format python source files using makepy column-aligned formatter')
+    p.flag('embed',       help='embed plain text files into pythom code')
+
     p.opti('--py',      '-P', help='set python version  CMD: test, lint, install, uninstall', default=py, type=int)
     p.opti('--pkg',     '-p', help='set package name    CMD: init, install, uninstall')
     p.opti('--src',     '-s', help='set source files    CMD: backport', nargs='*', default=src)
     p.opti('--trg',     '-t', help='set target dir      CMD: init, copy-tools, dist-install', default='.')
+    p.opti('--input',   '-i', help='input files         CMD: embed', nargs='*', default=[])
+    p.opti('--output',  '-o', help='output file         CMD: embed', default='-')
     p.opti('--tests',   '-T', help='set tests dir       CMD: test')
     p.opti('--main',    '-m', help='set main module     CMD: init, backport')
     p.opti('--envlist', '-e', help='set tox envlist     CMD: init, tox')
     p.flag('--force',   '-f', help='overwrite files     CMD: init, copy-tools')
+    p.flag('--mkfiles', '-k', help='create mk-files     CMD: init, copy_tools')
     # additional help should be available via the 'help' command that
     # provides help for all or some ot the next given option
     p.flag('help',            help='show contextual help')
@@ -315,7 +349,7 @@ def main(argv=None):
         elif cmd == 'clean':       clean()
         elif cmd == 'include':     print(include())
         elif cmd == 'path':        print(makepypath())
-        elif cmd == 'copy':        copy_tools(args.trg, force=args.force)
+        elif cmd == 'copy':        copy_tools(args.trg, force=args.force, mkfiles=args.mkfiles)
         elif cmd == 'test':        test(tests=args.tests, py=args.py)
         elif cmd == 'dist':        dist(py=args.py)
         elif cmd == 'dists':       dists(py=args.py)
@@ -323,8 +357,9 @@ def main(argv=None):
         elif cmd == 'dev-install': install(pkg=args.pkg, py=args.py, source=True)
         elif cmd == 'lint':        lint(py=args.py)
         elif cmd == 'init':        init(args.trg, args.pkg, args.main,
-                                        envlist=args.envlist, force=args.force)
+                                        envlist=args.envlist, force=args.force, mkfiles=args.mkfiles)
         elif cmd == 'format':      format(args.src, force=args.force)
+        elif cmd == 'embed':       embed(args.input, args.output, force=args.force)
         elif cmd == 'bumpversion': bumpversion(args.pkg)
         elif cmd == 'version':     version(args.pkg)
         else:                      raise ValueError('invalid command: {}'.format(cmd))

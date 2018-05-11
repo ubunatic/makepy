@@ -1,5 +1,6 @@
-from builtins import open, str
-import subprocess, re, logging, os
+from builtins import str, open as _open
+import subprocess, re, logging, os, sys
+from contextlib import contextmanager
 import shutil as sh
 from os.path import join, isdir, isfile, islink
 
@@ -11,6 +12,18 @@ def arglist(args, more_args=()):
     return list(args) + list(more_args)
 
 def argstr(args): return ' '.join(str(a) for a in args)
+
+@contextmanager
+def open(filename, mode='r', **kwargs):
+    try:
+        if filename == '-':
+            if 'r' in mode: fh = sys.stdin
+            else:           fh = sys.stdout
+        else:
+            fh = _open(filename, mode=mode, **kwargs)
+        yield fh
+    finally:
+        if fh not in (sys.stdout, sys.stdin): fh.close()
 
 def unpad(text):
     pads = re.findall(r'^[ ]+', text, flags=re.MULTILINE)

@@ -1,56 +1,10 @@
 # flake8:noqa=W191
 from __future__ import unicode_literals
-datafiles = {}
-datadirs = set()
-datafiles['setup.cfg'] = setup_cfg = """
-[bdist_wheel]
-universal=0
+files = {}
+dirs  = set()
 
-[metadata]
-license_file = LICENSE.txt
-
-[flake8]
-ignore = E402,E301,E302,E501,E305,E221,W391,E401,E241,E701,E231,E704,E251,E271,E272,E702,E226,E306,E201,E902,E722,E741
-exclude = ./backport .tox build
-"""
-datafiles['setup.py'] = setup_py = """
-#!/usr/bin/env python
-# NOTE: This is a generated, generic setup.py, produced by `makepy init`.
-#       Try to customize project.cfg first, before editing this file.
-
-from __future__ import absolute_import
-
-import os, sys
-from setuptools import setup, find_packages
-
-try: from makepy.project import load_project   # Try to use makepy module from current env.
-except ImportError:
-    sys.path.append(os.environ['MAKEPYPATH'])  # Fallback to first available system makepy.
-    from makepy.project import load_project    # Usage: MAKEPYPATH=`makepy path` python ...
-
-def run_setup():
-    kwargs = load_project('project.cfg')
-    kwargs['packages'] = find_packages(exclude=['contrib', 'docs', 'tests'])
-    setup(**kwargs)
-
-if __name__ == '__main__': run_setup()
-"""
-datafiles['.gitignore'] = _gitignore = """
-.cache
-build
-dist
-*.egg-info
-.asc
-transpiled
-backport
-.pytest_cache
-.tox
-__pycache__
-*.pyc
-*.pyo
-"""
-datadirs.add('make')
-datafiles['make/vars.mk'] = make_vars_mk = """
+dirs.add('make')
+files['make/vars.mk'] = make_vars_mk = """
 # Generic Python Project Make-Include File
 # ========================================
 # Copy these mk-files to your python project for easy testing, building, and publishing.
@@ -99,11 +53,11 @@ SRC_FILES = $(PKG) $(PRJ_TESTS) $(PRJ_FILES)
 # utils and help vars
 NOL       = 1>/dev/null  # mute stdout
 NEL       = 2>/dev/null  # mute stderr
-FILE2VAR  = sed 's/[^A-Za-z0-9_]\\+/_/g'
 
 """
-datadirs.add('make')
-datafiles['make/tests.mk'] = make_tests_mk = """
+
+dirs.add('make')
+files['make/tests.mk'] = make_tests_mk = """
 # Generic Python Project Make-Include File
 # ========================================
 # Copy these mk-files to your python project for easy testing, building, and publishing.
@@ -132,30 +86,31 @@ lint: vars ; $(MAKEPY) lint
 
 # Generic tests included when running `make test`.
 base-test: $(SRC_FILES) pyclean vars lint
-	$(IMPORT_TEST)
-	$(MAKEPY) test --tests $(PRJ_TESTS)
-	$(CLI_TEST)
+\t$(IMPORT_TEST)
+\t$(MAKEPY) test --tests $(PRJ_TESTS)
+\t$(CLI_TEST)
 
 # Test the installed package scripts (CLI tools of the package)
 SCRIPT_TEST = echo "please set SCRIPT_TEST = <shell-script-code> to run script tests"
 script-test:
-	$(BASH) '$(SCRIPT_TEST)' $(NOL)
+\t$(BASH) '$(SCRIPT_TEST)' $(NOL)
 
 # run tests using default pip and python outside of the project
 dist-test:
-	cd tests && python -m pytest -x .
-	cd /tmp && $(BASH) '$(DIST_TEST)' $(NOL)
+\tcd tests && python -m pytest -x .
+\tcd /tmp && $(BASH) '$(DIST_TEST)' $(NOL)
 
 # After pushing to PyPi, you want to check if you can pull and run
 # your package in a clean environment. Safest bet is to use docker!
 TEST_IMG     = python:$(PY)
 TEST_VOLUMES = -v $(CURDIR)/tests:/tests
 docker-test:
-	docker run -it $(TEST_VOLUMES) $(TEST_IMG) $(BASH) 'pip install $(PKG); $(DIST_TEST)'
+\tdocker run -it $(TEST_VOLUMES) $(TEST_IMG) $(BASH) 'pip install $(PKG); $(DIST_TEST)'
 
 """
-datadirs.add('make')
-datafiles['make/project.mk'] = make_project_mk = """
+
+dirs.add('make')
+files['make/project.mk'] = make_project_mk = """
 # Generic Python Project Make-Include File
 # ========================================
 # Copy these mk-files to your python project for easy testing, building, and publishing.
@@ -173,74 +128,50 @@ datafiles['make/project.mk'] = make_project_mk = """
 # pyclean: remove pyc and other cached files
 # copy:    copy all mk files to a new project
 
-.PHONY: vars pyclean pyclean-all copy datafile
+.PHONY: vars pyclean pyclean-all copy
 
 # Printing make vars can be helpful when testing multiple Python versions.
 vars:
-	# Make Variables
-	# --------------
-	# CURDIR    $(CURDIR)
-	# PKG       $(PKG)
-	# MAIN      $(MAIN)
-	#
-	# PY        $(PY)
-	# PYTHON    $(PYTHON)
-	# PIP       $(PIP)
-	# MAKEPY    $(MAKEPY)
-	# WHEELTAG  $(WHEELTAG)
-	#
-	# SETUP_DIR $(SETUP_DIR)
-	# SRC_FILES $(SRC_FILES)
-	# PRJ_TESTS $(PRJ_TESTS)
-	#
-	# Python/Pip Versions
-	# ---------------
-	# python: $(shell python    --version 2>&1)
-	# PYTHON: $(shell $(PYTHON) --version 2>&1)
-	# pip:    $(shell pip       --version 2>&1)
-	# PIP:    $(shell $(PIP)    --version 2>&1)
+\t# Make Variables
+\t# --------------
+\t# CURDIR    $(CURDIR)
+\t# PKG       $(PKG)
+\t# MAIN      $(MAIN)
+\t#
+\t# PY        $(PY)
+\t# PYTHON    $(PYTHON)
+\t# PIP       $(PIP)
+\t# MAKEPY    $(MAKEPY)
+\t# WHEELTAG  $(WHEELTAG)
+\t#
+\t# SETUP_DIR $(SETUP_DIR)
+\t# SRC_FILES $(SRC_FILES)
+\t# PRJ_TESTS $(PRJ_TESTS)
+\t#
+\t# Python/Pip Versions
+\t# ---------------
+\t# python: $(shell python    --version 2>&1)
+\t# PYTHON: $(shell $(PYTHON) --version 2>&1)
+\t# pip:    $(shell pip       --version 2>&1)
+\t# PIP:    $(shell $(PIP)    --version 2>&1)
 
 pyclean:
-	pyclean . || true  # try to use system pyclean if available
-	find . -name '*.py[co]'    -delete
-	find . -name '__pycache__' -delete
+\tpyclean . || true  # try to use system pyclean if available
+\tfind . -name '*.py[co]'    -delete
+\tfind . -name '__pycache__' -delete
 
 pyclean-all: pyclean
-	rm -rf .pytest_cache .cache dist build backport
+\trm -rf .pytest_cache .cache dist build backport
 
 copy:
-	test -n "$(TRG)"           # ensure the copy target TRG is set
-	mkdir -p $(TRG)/make       # create TRG/make dir in target dir
-	cp make/*.mk $(TRG)/make/  # copy all mk files to TRG/make
+\ttest -n "$(TRG)"           # ensure the copy target TRG is set
+\tmkdir -p $(TRG)/make       # create TRG/make dir in target dir
+\tcp make/*.mk $(TRG)/make/  # copy all mk files to TRG/make
 
-# TODO: move datafile generation to makepy
-# use the datafile target to concat plain text files into
-# a python file (useful for templating, etc.)
-PY_DATAFILE = $(PKG)/__datafiles__.py
-DATA_FILES  = $(wildcard ./datafiles)
-datafile: $(PY_DATAFILE)
-$(PY_DATAFILE): $(DATA_FILES) Makefile make/project.mk
-	test -n "$(PY_DATAFILE)"  # ensure the target PY_DATAFILE is set
-	test -n "$(DATA_FILES)"   # ensure some DATA_FILES are defined
-	echo "# flake8:noqa=W191"                      >  $@
-	echo "from __future__ import unicode_literals" >> $@
-	echo "datafiles = {}"                          >> $@
-	echo "datadirs = set()"                        >> $@
-	for f in $(DATA_FILES); do \\
-		dir=`dirname $$f`; dir=`basename $$dir` \\
-		base=`basename $$f`; \\
-		if test "$$dir" = "." -o -z "$$dir"; \\
-		then dir="";      psep="";  vsep=""; \\
-		else dir="$$dir"; psep="/"; vsep="_"; echo "datadirs.add('$$dir')"; \\
-		fi; \\
-		var=`echo "$$dir$$vsep$$base" | $(FILE2VAR)`; \\
-		echo "datafiles['$$dir$$psep$$base'] = $$var =" '\"\"\"'; \\
-		cat $$f | sed 's#\\\\#\\\\\\\\#g' | sed 's#\"\"\"#\\\\"\\\\"\\\\"#g'; \\
-		echo '\"\"\"'; \\
-	done                                           >> $@
 """
-datadirs.add('make')
-datafiles['make/twine.mk'] = make_twine_mk = """
+
+dirs.add('make')
+files['make/twine.mk'] = make_twine_mk = """
 # Generic Python Project Make-Include File
 # ========================================
 # Copy these mk-files to your python project for easy testing, building, and publishing.
@@ -257,32 +188,33 @@ datafiles['make/twine.mk'] = make_twine_mk = """
 .PHONY: sign test-publish tag publish
 
 sign:
-	# sign the dist with your gpg key
-	gpg --detach-sign -a dist/*.whl
+\t# sign the dist with your gpg key
+\tgpg --detach-sign -a dist/*.whl
 
 test-publish:
-	# upload to testpypi (needs valid ~/.pypirc)
-	twine upload --repository testpypi dist/*
+\t# upload to testpypi (needs valid ~/.pypirc)
+\ttwine upload --repository testpypi dist/*
 
 # TODO: add release note support
 tag: bumpversion clean dists
-	git add $(PKG)/__init__.py
-	git commit -m "bump version"
-	git tag v$(shell $(MAKEPY) version)
+\tgit add $(PKG)/__init__.py
+\tgit commit -m "bump version"
+\tgit tag v$(shell $(MAKEPY) version)
 
 # TODO: add support for universal wheels
 PY2_WHEEL = $(shell find dist -name '$(PKG)*py2-none-any*.whl')
 PY3_WHEEL = $(shell find dist -name '$(PKG)*py3-none-any*.whl')
 publish: sign
-	# upload to pypi (requires pypi account)
-	# p3-wheel: $(PY3_WHEEL)
-	# p2-wheel: $(PY2_WHEEL)
-	@read -p "start upload (y/N)? " key && test "$$key" = "y"
-	twine upload --repository pypi $(PY3_WHEEL) $(PY2_WHEEL)
+\t# upload to pypi (requires pypi account)
+\t# p3-wheel: $(PY3_WHEEL)
+\t# p2-wheel: $(PY2_WHEEL)
+\t@read -p "start upload (y/N)? " key && test "$$key" = "y"
+\ttwine upload --repository pypi $(PY3_WHEEL) $(PY2_WHEEL)
 
 """
-datadirs.add('make')
-datafiles['make/makepy.mk'] = make_makepy_mk = """
+
+dirs.add('make')
+files['make/makepy.mk'] = make_makepy_mk = """
 # Generic Python Project Make-Include File
 # ========================================
 # Copy these mk-files to your python project for easy testing, building, and publishing.

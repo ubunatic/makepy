@@ -5,10 +5,16 @@ include make/makepy.mk  # include all makepy vars and targets
 clean: pyclean-all      # clean up anything
 
 # re-build the in-line datafiles if changed using makepy:datafiles target
-PY_DATAFILE := makepy/__datafiles__.py
-DATA_FILES  := setup.cfg setup.py .gitignore $(wildcard ./make/*)
+PY_DATAFILE := makepy/_datafiles.py
+PY_MAKEFILE := makepy/_makefiles.py
+DATAFILES  := setup.cfg setup.py .gitignore
+MAKEFILES  := $(wildcard ./make/*)
+datafiles: $(PY_DATAFILE) $(PY_MAKEFILE)
+$(PY_DATAFILE): Makefile $(DATAFILES) ; $(MAKEPY) embed --debug -f -i $(DATAFILES) -o $@
+$(PY_MAKEFILE): Makefile $(MAKEFILES) ; $(MAKEPY) embed --debug -f -i $(MAKEFILES) -o $@
+
 # ensure datafiles are updated before running makepy or tests
-$(MAKEPY_COMMANDS) test: datafile
+$(MAKEPY_COMMANDS) test: datafiles
 
 # setup makepy script-test
 SCRIPT_TEST = tests/test_examples.sh && tests/test_makepy.sh
