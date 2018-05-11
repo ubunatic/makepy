@@ -4,6 +4,8 @@ all: clean test         # define default target before anything else
 include make/makepy.mk  # include all makepy vars and targets
 clean: pyclean-all      # clean up anything
 
+dist backport: $(SRC_FILES) datafiles
+
 # re-build the in-line datafiles if changed using makepy:datafiles target
 PY_DATAFILE := makepy/_datafiles.py
 PY_MAKEFILE := makepy/_makefiles.py
