@@ -25,8 +25,8 @@ test-publish:
 PKG_VERSION = $(shell $(MAKEPY) version)
 tag: clean dists
 	git add $(PKG)/__init__.py
-	git commit -m "tagged v$(PKG_VERSION)"
-	git tag v$(PKG_VERSION)
+	git commit --amend --no-edit --allow-empty
+	git tag -f v$(PKG_VERSION)
 
 # TODO: add support for universal wheels
 PY2_WHEEL = $(shell find dist -name '$(PKG)*py2-none-any*.whl')
