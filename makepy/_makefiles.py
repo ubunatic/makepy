@@ -196,10 +196,11 @@ test-publish:
 \ttwine upload --repository testpypi dist/*
 
 # TODO: add release note support
-tag: bumpversion clean dists
+PKG_VERSION = $(shell $(MAKEPY) version)
+tag: clean dists
 \tgit add $(PKG)/__init__.py
-\tgit commit -m "bump version"
-\tgit tag v$(shell $(MAKEPY) version)
+\tgit commit -m "tagged v$(PKG_VERSION)"
+\tgit tag v$(PKG_VERSION)
 
 # TODO: add support for universal wheels
 PY2_WHEEL = $(shell find dist -name '$(PKG)*py2-none-any*.whl')
