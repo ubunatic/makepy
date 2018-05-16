@@ -156,9 +156,9 @@ vars:
 \t# PIP:    $(shell $(PIP)    --version 2>&1)
 
 pyclean:
-\tpyclean . || true  # try to use system pyclean if available
-\tfind . -name '*.py[co]'    -delete
-\tfind . -name '__pycache__' -delete
+\t@pyclean . $(NEL)                          || echo 'WARNING: pyclean command failed'
+\t@find . -name '*.py[co]'    -delete $(NEL) || echo 'WARNING: failed to cleanup some .py* files'
+\t@find . -name '__pycache__' -delete $(NEL) || echo 'WARNING: failed to cleanup some __pycache__ dirs'
 
 pyclean-all: pyclean
 \trm -rf .pytest_cache .cache dist build backport
