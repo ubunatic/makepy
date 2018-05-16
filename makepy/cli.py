@@ -128,17 +128,17 @@ def generate_packagefiles(pkg_dir, main):
 def user_name():
     name = call_unsafe('git config --get user.name').strip()
     log.debug('git user.name: %s', name)
-    if name == '': name = os.environ.get('USER','System Root')
-    return '{}'.format(name)
+    if name == '': name = str(os.environ.get('USER', 'System Root'))
+    return name
 
-def safe_name(): return re.sub(r'[^a-z0-9_\.-]', '.', user_name().lower())
+def safe_name(): return str(re.sub(r'[^a-z0-9_\.-]', '.', user_name().lower()))
 
-def github_name(): return os.environ.get('GITHUB_NAME', '{}'.format(safe_name()))
+def github_name(): return str(os.environ.get('GITHUB_NAME', safe_name()))
 
 def user_email():
     email = call_unsafe('git config --get user.email').strip()
     if email == '': email = safe_name() + '@gmail.com'
-    return '{}'.format(email)
+    return str(email)
 
 def date(fmt='%Y-%m-%d', dt=None):
     if dt is None: dt = datetime.utcnow()

@@ -16,6 +16,7 @@ def argstr(args): return ' '.join(str(a) for a in args)
 
 @contextmanager
 def open(filename, mode='r', **kwargs):  # flake8:noqa=F811
+    fh = None
     try:
         if filename == '-':
             if 'r' in mode: fh = sys.stdin
@@ -24,7 +25,7 @@ def open(filename, mode='r', **kwargs):  # flake8:noqa=F811
             fh = _open(filename, mode=mode, **kwargs)
         yield fh
     finally:
-        if fh not in (sys.stdout, sys.stdin): fh.close()
+        if fh not in (None, sys.stdout, sys.stdin): fh.close()
 
 def unpad(text):
     pads = re.findall(r'^[ ]+', text, flags=re.MULTILINE)
@@ -43,9 +44,9 @@ def run(args, *more_args, **PopenArgs):
 
 def call(args, *more_args, **PopenArgs):
     args = arglist(args, more_args)
-    log.debug("call: %s, %s", argstr(args), PopenArgs)
+    log.debug("call: %s, %s (py:%s)", argstr(args), PopenArgs, sys.version_info.major)
     res = subprocess.check_output(args, **PopenArgs)
-    return str(res)
+    return str(bytes(res).decode('utf-8'))
 
 def call_unsafe(args, *more_args, **PopenArgs):
     try: return call(args, *more_args, **PopenArgs)
