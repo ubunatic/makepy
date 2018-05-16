@@ -67,6 +67,7 @@ def ls(dirname=None):
 
 def cp(args, *more_args, **kwargs):
     force = kwargs.get('force', False)
+    skip = kwargs.get('skip', False)
     args = arglist(args, more_args)
     log.debug("cp %s, %s", argstr(args), kwargs)
     dest = args.pop()
@@ -75,6 +76,7 @@ def cp(args, *more_args, **kwargs):
         if   isdir(f):  fn = sh.copytree
         elif isfile(f): fn = sh.copyfile
         elif islink(f): fn = sh.copyfile
+        elif skip: log.debug('skipped %s -> %s: source missing', f, trg); continue
         else: raise ValueError("invalid file: {}".format(f))
         exists = os.path.exists(trg)
         if not exists or force: fn(f, trg)

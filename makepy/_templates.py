@@ -79,7 +79,6 @@ Install via `pip install {NEW_PRJ}`. Then run the program:
 """
 
 templates['makepy.cfg'] = makepy_cfg = """
-
 [makepy]
 # The makepy section in setup.cfg contains all custom parameters
 # required by setup.py to install the package and to build the dist files

@@ -31,7 +31,7 @@ def backport(src_files, **kwargs):
     main = kwargs['main']
     rm('backport')
     mkdir('backport')
-    cp(src_files, 'backport')
+    cp(src_files, 'backport', skip=True)
     transpile('backport')
     if main is not None:
         # change tag in main modle
@@ -98,12 +98,13 @@ def copy_tools(trg, force=False, mkfiles=False):
 
 def write_file(name, trg_dir, text, force=False, strip=True, mode='w', **fmt):
     trg = join(trg_dir, name)
-    if isfile(trg) and (not force or 'a' in mode):
+    if isfile(trg) and not (force or 'a' in mode):
         log.debug('skipping to write: %s', trg)
         return
     if strip: text = '{}\n'.format(text.strip())
     if len(fmt) > 0: text = text.format(**fmt)
-    with open(trg, 'w') as f: f.write(str(text))
+    # log.debug('write %s, mode=%s, text="%s"', trg, mode, text)
+    with open(trg, mode) as f: f.write(str(text))
 
 def generate_makefile(trg, main):
     if main is not None:
@@ -151,14 +152,17 @@ def generate_readme(trg, prj):
     write_file('README.md', trg, templates['README.md'], NEW_PRJ=prj, COPY_INFO=COPY_INFO)
 
 def update_setup_cfg(trg, prj):
-    t = join(trg, 'setup.cfg'); mode = 'w'
+    t = join(trg, 'setup.cfg')
     if isfile(t):
         if  'makepy' in read_config(t):
-            log.debug('skipping to update existing makepy section in %s', t)
+            log.info('skipping to update existing makepy section in %s', t)
             return
-        mode = 'a'
+        log.info('adding makepy section to %s', t)
+        mode = 'a'; strip = False
+    else:
+        mode = 'w'; strip = True
 
-    write_file('setup.cfg', trg, templates['makepy.cfg'], mode=mode,
+    write_file('setup.cfg', trg, templates['makepy.cfg'], mode=mode, strip=strip,
                NAME = user_name(),
                EMAIL = user_email(),
                GITHUB_NAME = github_name(),

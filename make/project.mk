@@ -43,9 +43,9 @@ vars:
 	# PIP:    $(shell $(PIP)    --version 2>&1)
 
 pyclean:
-	pyclean . || true  # try to use system pyclean if available
-	find . -name '*.py[co]'    -delete
-	find . -name '__pycache__' -delete
+	@pyclean . $(NEL)                          || echo 'WARNING: pyclean command failed'
+	@find . -name '*.py[co]'    -delete $(NEL) || echo 'WARNING: failed to cleanup some .py* files'
+	@find . -name '__pycache__' -delete $(NEL) || echo 'WARNING: failed to cleanup some __pycache__ dirs'
 
 pyclean-all: pyclean
 	rm -rf .pytest_cache .cache dist build backport
