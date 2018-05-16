@@ -6,6 +6,7 @@ from makepy import argparse
 from makepy.tox import tox, clean
 from os.path import join, isfile, dirname, abspath, basename
 from makepy.shell import run, cp, call_unsafe, sed, mkdir, rm, block, open
+from makepy.project import read_config
 
 # load files and templates
 from makepy._templates import templates
@@ -95,9 +96,9 @@ def copy_tools(trg, force=False, mkfiles=False):
     for f, text in files.items(): write_file(f, trg, text, force=force)
     log.info('copied tools: %s -> %s', list(files) + ['setup.py'], trg)
 
-def write_file(name, trg_dir, text, force=False, strip=True, **fmt):
+def write_file(name, trg_dir, text, force=False, strip=True, mode='w', **fmt):
     trg = join(trg_dir, name)
-    if isfile(trg) and not force:
+    if isfile(trg) and (not force or 'a' in mode):
         log.debug('skipping to write: %s', trg)
         return
     if strip: text = '{}\n'.format(text.strip())
@@ -149,8 +150,15 @@ def generate_readme(trg, prj):
     log.debug('using COPY_INFO = %s', COPY_INFO)
     write_file('README.md', trg, templates['README.md'], NEW_PRJ=prj, COPY_INFO=COPY_INFO)
 
-def generate_project_cfg(trg, prj):
-    write_file('project.cfg', trg, templates['project.cfg'],
+def update_setup_cfg(trg, prj):
+    t = join(trg, 'setup.cfg'); mode = 'w'
+    if isfile(t):
+        if  'makepy' in read_config(t):
+            log.debug('skipping to update existing makepy section in %s', t)
+            return
+        mode = 'a'
+
+    write_file('setup.cfg', trg, templates['makepy.cfg'], mode=mode,
                NAME = user_name(),
                EMAIL = user_email(),
                GITHUB_NAME = github_name(),
@@ -181,7 +189,7 @@ def init(trg, pkg, main, envlist=None, force=False, mkfiles=False):
     generate_packagefiles(pkg_dir, main)
     generate_readme(trg, prj)
     generate_tests(trg, prj)
-    generate_project_cfg(trg, prj)
+    update_setup_cfg(trg, prj)
     generate_license_txt(trg)
     log.info('done:\n%s', block(
         """
@@ -291,7 +299,7 @@ def add_requirements(commands, py=py):
 
 def main(argv=None):
     # 1. setup defaults for often required options
-    template_src = ['project.cfg', 'tox.ini', 'README.md', 'LICENSE.txt']
+    template_src = ['makepy.cfg', 'tox.ini', 'README.md', 'LICENSE.txt']
     common_src = list(datadirs) + list(datafiles) + template_src
     src = [basename(abspath('.'))] + common_src
     # 2. create the parser with common options

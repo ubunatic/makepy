@@ -50,6 +50,6 @@ gcs-upload:
 DEMO = docker run -it $(TEST_VOLUMES) -v $(CURDIR)/.vol:/tmp/prj $(IMG)
 CMD  = 'bash -i'
 .vol: ; mkdir .vol
-docker-demo:  .vol; $(DEMO) 'cd /tmp/prj && /tests/test_project.sh myapp'
+docker-demo:  .vol; $(DEMO) 'cd /tmp/prj && rm -rf myapp && /tests/test_project.sh myapp'
 docker-login: .vol; $(DEMO) $(CMD)
 

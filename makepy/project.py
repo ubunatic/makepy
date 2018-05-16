@@ -3,22 +3,24 @@ from builtins import open
 from configparser import ConfigParser
 import sys, os
 
-data_files = [('.', ['project.cfg'])]
+data_files = [
+    # ('.', ['setup.cfg', 'makepy.cfg'])
+]
 
 def warn(text, *values):
     w = 'WARNING: ' + (text % tuple(values)) + '\n'
     sys.stderr.write(w)
 
-def load(filename):
+def read(filename):
     with open(filename) as f: return f.read()
 
-def load_lines(filename):
+def read_lines(filename):
     with open(filename) as f:
         for l in f: yield l.strip()
 
-def load_config(project_cfg='project.cfg'):
+def read_config(cfg_file='setup.cfg'):
     p = ConfigParser()
-    p.read(project_cfg)
+    p.read(cfg_file)
     return {sec:dict(p.items(sec)) for sec in p.sections()}
 
 def unquote(s): return s.replace('"','').replace("'",'').strip()
@@ -29,7 +31,7 @@ def cleanup_classifiers(classifiers):
 def read_version(main_dir, init='__init__.py'):
     version = tag = None
     init = os.path.join(main_dir, init)
-    for l in load_lines(init):
+    for l in read_lines(init):
         if   l.startswith('__version__'): version = unquote(l.split('=')[1])
         elif l.startswith('__tag__'):     tag     = unquote(l.split('=')[1])
 
@@ -44,37 +46,49 @@ def parse_wheeltag(args=None):
         if arg == '--python-tag': wheeltag = args[i+1]
     return wheeltag
 
-def load_project(project_cfg='project.cfg'):
-    readme = load('README.md')
-    cfg = load_config(project_cfg)
-    project = cfg['project']
-    author  = cfg.get('author',  {})
-    scripts = cfg.get('scripts', {})
-    python  = cfg.get('python',  {})
+def read_makepy_section(*files):
+    files = set(tuple(files) + ('makepy.cfg', 'setup.cfg'))
+    d = None
+    for f in files:
+        if os.path.isfile(f): d = read_config(f).get('makepy')
+        if d is not None: break
+    if d is None:
+        raise Exception('[makepy] section not found in config files', files,
+                        os.listdir('.'))
+    return d
 
-    author_name  = author.get('name')
-    author_email = author.get('email')
-    github_name  = author.get('github_name')
+def read_setup_args(cfg_file='setup.cfg'):
+    d = read_makepy_section(cfg_file)
 
-    name         = project['name']
-    license      = project['license']
-    main         = project['main']
-    binary       = project.get('binary')
-    requires     = project.get('requires','').split(' ')
-    keywords     = project.get('keywords','').split(' ')
-    description  = project['description']
-    classifiers  = project.get('classifiers', '').split('\n')
-    classifiers += [project['status']]
+    author_name  = d.get('author')
+    author_email = d.get('email')
+    github_name  = d.get('github_name')
 
-    project_dir = os.path.dirname(project_cfg)
+    name     = d['name']
+    license  = d['license']
+    main     = d['main']
+    binary   = d.get('binary')
+    requires = d.get('requires','').split(' ')
+    keywords = d.get('keywords','').split(' ')
+
+    description   = d['description']
+    readme_format = d.get('readme_format', 'text/markdown')
+    readme = read('README.md')  # TODO: detect readme format
+
+    classifiers  = d.get('classifiers', '').split('\n')
+    classifiers += [d['status']]
+
+    project_dir = os.path.dirname(cfg_file)
     project_name = name
+
+    scripts = [s.split('=') for s in d.get('scripts','').strip().split('\n')]
 
     code_version, tag = read_version(os.path.join(project_dir, main))
     wheeltag          = parse_wheeltag()
-    version           = project.get('version', code_version)
+    version           = d.get('version', code_version)
     if version != code_version:
         raise ValueError('project version != code_version, '
-                         'please update or remove "version" from project.cfg')
+                         'please update or remove "makepy:version" from setup.cfg')
 
     if wheeltag != tag:
         warn('Wheel tag != code tag. You are building for python-tag "%s", '
@@ -83,11 +97,11 @@ def load_project(project_cfg='project.cfg'):
     if wheeltag == 'py2': py = 2
     else:                 py = sys.version_info.major
 
-    versions      = [unquote(v) for v in python.get('versions', str(py)).split()]
-    deps_default  = python.get('default_deps','').split(' ')
-    deps_backport = python.get('backport_deps','').split(' ')
+    versions      = [unquote(v) for v in d.get('python_versions', str(py)).split()]
+    deps_default  = d.get('default_deps','').split(' ')
+    deps_backport = d.get('backport_deps','').split(' ')
 
-    console_scripts = ['{}={}'.format(k, scripts[k]) for k in scripts]
+    console_scripts = ['{}={}'.format(cmd, spec) for cmd, spec in scripts]
     entry_points    = {'console_scripts': console_scripts}
 
     if binary is not None and main is not None:
@@ -119,7 +133,7 @@ def load_project(project_cfg='project.cfg'):
     #       the py3 wheel tagged with, e.g., '>=3'.
     classifiers += ['Programming Language :: Python :: {}'.format(v) for v in versions]
     classifiers = list(set(classifiers))
-    python_requires = python.get('python_requires', '>=2.6')
+    python_requires = d.get('python_requires', '>=2.6')
 
     if github_name is None:
         project_urls = None
@@ -142,7 +156,7 @@ def load_project(project_cfg='project.cfg'):
         version          = version,
         description      = description,
         long_description = readme,
-        long_description_content_type = 'text/markdown',
+        long_description_content_type = readme_format,
         url              = url,
         author           = author_name,
         author_email     = author_email,

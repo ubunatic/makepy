@@ -47,7 +47,7 @@ endif
 # Use PRJ_TESTS = other1 other2 in your Makefile to override.
 PRJ_TESTS = $(wildcard ./tests)
 # We use regard project files as source files to trigger rebuilds, etc.
-PRJ_FILES = tox.ini setup.py setup.cfg project.cfg Makefile LICENSE.txt README.md
+PRJ_FILES = tox.ini setup.py setup.cfg Makefile LICENSE.txt README.md
 SRC_FILES = $(PKG) $(PRJ_TESTS) $(PRJ_FILES)
 
 # utils and help vars

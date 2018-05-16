@@ -21,7 +21,8 @@ templates['Makefile'] = Makefile = """
 MAIN        := {MAIN}
 SCRIPT_TEST := {MAIN} -h
 
-include make/makepy.mk
+# run `makepy init --mkfiles` and uncomment the next line to use makepy's make features
+# include make/makepy.mk
 
 test: my-test
 my-test:
@@ -77,16 +78,16 @@ Install via `pip install {NEW_PRJ}`. Then run the program:
 {COPY_INFO}
 """
 
-templates['project.cfg'] = project_cfg = """
-# project.cfg contains all custom parameters required by setup.py
-# to install the package and to build the dist files
+templates['makepy.cfg'] = makepy_cfg = """
 
-[author]
-name        = {NAME}
+[makepy]
+# The makepy section in setup.cfg contains all custom parameters
+# required by setup.py to install the package and to build the dist files
+
+author      = {NAME}
 email       = {EMAIL}
 github_name = {GITHUB_NAME}
 
-[project]
 license     = MIT  # if changed, also update the classifiers
 description = {PROJECT}: My pimped project
 name        = {PROJECT}
@@ -105,16 +106,15 @@ classifiers =
 \tIntended Audience :: Developers
 \tLicense :: OSI Approved :: MIT License
 
-[scripts]
-{PROJECT} = {PROJECT}:main
+scripts =
+\t{PROJECT}={PROJECT}:main
 
-[python]
 # used as additional `requires`
 # backport_deps =
 # default_deps  =
 
 # supported versions
-versions        = 2 2.6 2.7 3 3.3 3.4 3.5 3.6
+python_versions = 2 2.6 2.7 3 3.3 3.4 3.5 3.6
 python_requires = >=2.6
 """
 
