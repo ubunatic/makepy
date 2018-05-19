@@ -7,8 +7,8 @@ clean: pyclean-all      # clean up anything
 # re-build the in-line datafiles if changed using makepy:datafiles target
 PY_DATAFILE := makepy/_datafiles.py
 PY_MAKEFILE := makepy/_makefiles.py
-DATAFILES  := setup.cfg setup.py .gitignore
-MAKEFILES  := $(wildcard ./make/*)
+DATAFILES   := setup.py .gitignore
+MAKEFILES   := $(wildcard ./make/*)
 datafiles: $(PY_DATAFILE) $(PY_MAKEFILE)
 $(PY_DATAFILE): Makefile $(DATAFILES) ; $(MAKEPY) embed --debug -f -i $(DATAFILES) -o $@
 $(PY_MAKEFILE): Makefile $(MAKEFILES) ; $(MAKEPY) embed --debug -f -i $(MAKEFILES) -o $@

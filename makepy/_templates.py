@@ -2,6 +2,18 @@ from __future__ import unicode_literals
 
 templates = {}
 
+templates['setup.cfg'] = setup_cfg = """
+[bdist_wheel]
+universal=0
+
+[metadata]
+license_file = LICENSE.txt
+
+[flake8]
+ignore = E402,E301,E302,E501,E305,E221,W391,E401,E241,E701,E231,E704,E251,E271,E272,E702,E226,E306,E201,E902,E722,E741
+exclude = ./backport .tox build
+"""
+
 templates['tox.ini'] = tox_ini = """
 [tox]
 {envline}

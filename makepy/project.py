@@ -3,10 +3,6 @@ from builtins import open
 from configparser import ConfigParser
 import sys, os
 
-data_files = [
-    # ('.', ['setup.cfg', 'makepy.cfg'])
-]
-
 def warn(text, *values):
     w = 'WARNING: ' + (text % tuple(values)) + '\n'
     sys.stderr.write(w)
@@ -177,6 +173,5 @@ def read_setup_args(cfg_file='setup.cfg'):
         entry_points = entry_points,
         # The key is used to render the link text on PyPI.
         project_urls = project_urls,
-        data_files = data_files,
     )
 

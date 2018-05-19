@@ -151,7 +151,10 @@ def generate_readme(trg, prj):
     log.debug('using COPY_INFO = %s', COPY_INFO)
     write_file('README.md', trg, templates['README.md'], NEW_PRJ=prj, COPY_INFO=COPY_INFO)
 
-def update_setup_cfg(trg, prj):
+def generate_setup_cfg(trg):
+    write_file('setup.cfg', trg, templates['setup.cfg'])
+
+def generate_makepy_section(trg, prj):
     t = join(trg, 'setup.cfg')
     if isfile(t):
         if  'makepy' in read_config(t):
@@ -188,12 +191,13 @@ def init(trg, pkg, main, envlist=None, force=False, mkfiles=False):
     prj = re.sub('[^A-Za-z0-9_-]+','-', basename(abspath(trg)))
     mkdir(pkg_dir)
     copy_tools(trg, force=force, mkfiles=mkfiles)
+    generate_setup_cfg(trg)
     generate_makefile(trg, main)
     generate_toxini(trg, envlist)
     generate_packagefiles(pkg_dir, main)
     generate_readme(trg, prj)
     generate_tests(trg, prj)
-    update_setup_cfg(trg, prj)
+    generate_makepy_section(trg, prj)
     generate_license_txt(trg)
     log.info('done:\n%s', block(
         """
@@ -303,7 +307,7 @@ def add_requirements(commands, py=py):
 
 def main(argv=None):
     # 1. setup defaults for often required options
-    template_src = ['makepy.cfg', 'tox.ini', 'README.md', 'LICENSE.txt']
+    template_src = ['setup.cfg', 'makepy.cfg', 'tox.ini', 'README.md', 'LICENSE.txt']
     common_src = list(datadirs) + list(datafiles) + template_src
     src = [basename(abspath('.'))] + common_src
     # 2. create the parser with common options

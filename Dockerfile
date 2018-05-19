@@ -31,7 +31,7 @@ ADD makepy   $WORKDIR/makepy
 ADD tests    $WORKDIR/tests
 ADD examples $WORKDIR/examples
 ADD .gitignore LICENSE.txt README.md $WORKDIR/
-ADD makepy.cfg setup.cfg setup.py tox.ini $WORKDIR/
+ADD setup.cfg setup.py tox.ini $WORKDIR/
 
 RUN python2 -m makepy install
 RUN python3 -m makepy install
