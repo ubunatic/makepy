@@ -1,6 +1,9 @@
 steps:
 - name: gcr.io/cloud-builders/docker
-  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/makepy', '.' ]
+  args: [
+     'build', '-t', 'gcr.io/$PROJECT_ID/makepy', '.',
+     '--cache-from','gcr.io/$PROJECT_ID/makepy:latest'
+  ]
 - name: gcr.io/$PROJECT_ID/makepy
   args: [ 'cd tests && ./test_versions.sh && ./test_examples.sh' ]
 
