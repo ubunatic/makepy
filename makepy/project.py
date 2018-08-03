@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 from builtins import open
 from configparser import ConfigParser
+from setuptools import find_packages
 import sys, os
+
+PKG_EXCLUDES = ('contrib', 'docs', 'tests', 'backport', 'vendor')
 
 def warn(text, *values):
     w = 'WARNING: ' + (text % tuple(values)) + '\n'
@@ -52,6 +55,12 @@ def read_makepy_section(*files):
         raise Exception('[makepy] section not found in config files', files,
                         os.listdir('.'))
     return d
+
+def find_packages_ns(ns=None):
+    if ns is None: ns = '.'
+    pkgs = find_packages(ns, exclude=PKG_EXCLUDES)
+    if ns != '.': pkgs = ['{}.{}'.format(ns, p) for p in pkgs]
+    return pkgs
 
 def read_setup_args(cfg_file='setup.cfg'):
     d = read_makepy_section(cfg_file)
@@ -148,9 +157,10 @@ def read_setup_args(cfg_file='setup.cfg'):
 
     classifiers = cleanup_classifiers(classifiers)
 
+    packages = find_packages_ns(ns=namespace)
+
     return dict(
         name             = project_name,
-        namespace        = namespace,
         version          = version,
         description      = description,
         long_description = readme,
@@ -162,6 +172,7 @@ def read_setup_args(cfg_file='setup.cfg'):
         license          = license,
         classifiers      = classifiers,
         keywords         = keywords,
+        packages         = packages,
         install_requires = requires,
         # example: pip install widdy[dev]
         extras_require = {
