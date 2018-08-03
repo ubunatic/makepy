@@ -154,7 +154,7 @@ def generate_readme(trg, prj):
 def generate_setup_cfg(trg):
     write_file('setup.cfg', trg, templates['setup.cfg'])
 
-def generate_makepy_section(trg, prj):
+def generate_makepy_section(trg, prj, main, ns):
     t = join(trg, 'setup.cfg')
     if isfile(t):
         if  'makepy' in read_config(t):
@@ -169,7 +169,9 @@ def generate_makepy_section(trg, prj):
                NAME = user_name(),
                EMAIL = user_email(),
                GITHUB_NAME = github_name(),
-               PROJECT = prj)
+               PROJECT = prj,
+               MAIN = main,
+               NAMESPACE = ns)
 
 def generate_license_txt(trg):
     write_file('LICENSE.txt', trg, templates['LICENSE_txt'],
@@ -185,9 +187,9 @@ def generate_tests(trg,prj):
     mkdir(test_dir)
     write_file(test_file, test_dir, test_code)
 
-def init(trg, pkg, main, envlist=None, force=False, mkfiles=False):
+def init(trg, pkg, main, ns='.', envlist=None, force=False, mkfiles=False):
     assert None not in (trg, pkg)
-    pkg_dir = join(trg, pkg)
+    pkg_dir = join(trg, ns, pkg)
     prj = re.sub('[^A-Za-z0-9_-]+','-', basename(abspath(trg)))
     mkdir(pkg_dir)
     copy_tools(trg, force=force, mkfiles=mkfiles)
@@ -196,8 +198,8 @@ def init(trg, pkg, main, envlist=None, force=False, mkfiles=False):
     generate_toxini(trg, envlist)
     generate_packagefiles(pkg_dir, main)
     generate_readme(trg, prj)
-    generate_tests(trg, prj)
-    generate_makepy_section(trg, prj)
+    generate_tests(trg, ns, pkg)
+    generate_makepy_section(trg, prj, main, ns)
     generate_license_txt(trg)
     log.info('done:\n%s', block(
         """

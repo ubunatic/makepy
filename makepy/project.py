@@ -60,12 +60,13 @@ def read_setup_args(cfg_file='setup.cfg'):
     author_email = d.get('email')
     github_name  = d.get('github_name')
 
-    name     = d['name']
-    license  = d['license']
-    main     = d['main']
-    binary   = d.get('binary')
-    requires = d.get('requires','').split(' ')
-    keywords = d.get('keywords','').split(' ')
+    name      = d['name']
+    license   = d['license']
+    main      = d['main']
+    namespace = d.get('namespace', '.')
+    binary    = d.get('binary')
+    requires  = d.get('requires','').split(' ')
+    keywords  = d.get('keywords','').split(' ')
 
     description   = d['description']
     readme_format = d.get('readme_format', 'text/markdown')
@@ -149,6 +150,7 @@ def read_setup_args(cfg_file='setup.cfg'):
 
     return dict(
         name             = project_name,
+        namespace        = namespace,
         version          = version,
         description      = description,
         long_description = readme,

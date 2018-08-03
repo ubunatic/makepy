@@ -69,14 +69,14 @@ def main(argv=None):
     p = argparse.ArgumentParser().with_logging().with_debug()
     args = p.parse_args(argv)
     log.info('main called with %s', args)
-""".format(flake_rules = 'flake8: noqa: F401')
+""".format(flake_rules = 'noqa: F401')
 
 templates['__main__.py'] = __main___py = """
 # {flake_rules}
 from __future__ import absolute_import
 from {{MAIN}} import main
 main()
-""".format(flake_rules = 'flake8: noqa: F401')
+""".format(flake_rules = 'noqa: F401')
 
 templates['README.md'] = README_md = """
 {NEW_PRJ}
@@ -100,9 +100,10 @@ email       = {EMAIL}
 github_name = {GITHUB_NAME}
 
 license     = MIT  # if changed, also update the classifiers
-description = {PROJECT}: My pimped project
+description = {PROJECT}: My Python project
 name        = {PROJECT}
-main        = {PROJECT}
+main        = {MAIN}
+namespace   = {NAMESPACE}
 
 # 3 - Alpha, 4 - Beta, 5 - Production/Stable
 status = Development Status :: 3 - Alpha

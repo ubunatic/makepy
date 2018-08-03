@@ -4,17 +4,15 @@
 
 from __future__ import absolute_import
 
-import os, sys
 from setuptools import setup, find_packages
-
-try: from makepy.project import read_setup_args  # Try to use makepy module from current env.
-except ImportError:
-    sys.path.append(os.environ['MAKEPYPATH'])    # Fallback to first available system makepy.
-    from makepy.project import read_setup_args   # Usage: MAKEPYPATH=`makepy path` python ...
+from makepy.project import read_setup_args
 
 def run_setup():
     kwargs = read_setup_args()
-    kwargs['packages'] = find_packages(exclude=['contrib', 'docs', 'tests', 'backport'])
+    ns = kwargs.get('ns', '.')
+    packages = find_packages(ns, exclude=['contrib', 'docs', 'tests', 'backport', 'vendor'])
+    if ns != '.': packages = ['{}.{}'.format(ns, p) for p in packages]
+    kwargs['packages'] = packages
     setup(**kwargs)
 
 if __name__ == '__main__': run_setup()
