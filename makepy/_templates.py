@@ -121,7 +121,7 @@ classifiers =
 \tLicense :: OSI Approved :: MIT License
 
 scripts =
-\t{PROJECT}={PROJECT}:main
+\t{PROJECT}={MAIN}:main
 
 # used as additional `requires`
 # backport_deps =

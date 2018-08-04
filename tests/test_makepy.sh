@@ -3,7 +3,8 @@
 set -o errexit
 set -o verbose
 
-PRJ=test_project
+PRJ=$1
+test -n "$PRJ" || PRJ=test_project
 WORKDIR=$PWD/$PRJ
 mkdir -p $WORKDIR
 cd $WORKDIR

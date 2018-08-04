@@ -28,6 +28,7 @@ def cleanup_classifiers(classifiers):
     return [c for c in classifiers if c.strip() != ""]
 
 def read_version(main_dir, init='__init__.py'):
+    assert '.' not in os.path.basename(main_dir)
     version = tag = None
     init = os.path.join(main_dir, init)
     for l in read_lines(init):
@@ -89,7 +90,9 @@ def read_setup_args(cfg_file='setup.cfg'):
 
     scripts = [s.split('=') for s in d.get('scripts','').strip().split('\n')]
 
-    code_version, tag = read_version(os.path.join(project_dir, main))
+    main_dir = os.path.join(project_dir, *main.split('.'))
+    print('main_dir', main_dir, 'main', main)
+    code_version, tag = read_version(main_dir)
     wheeltag          = parse_wheeltag()
     version           = d.get('version', code_version)
     if version != code_version:
@@ -108,7 +111,6 @@ def read_setup_args(cfg_file='setup.cfg'):
     deps_backport = d.get('backport_deps','').split(' ')
 
     console_scripts = ['{}={}'.format(cmd, spec) for cmd, spec in scripts]
-    entry_points    = {'console_scripts': console_scripts}
 
     if binary is not None and main is not None:
         script = '{b}={m}:main'.format(b=binary, m=main)
@@ -133,6 +135,9 @@ def read_setup_args(cfg_file='setup.cfg'):
         """.format(name=name, rest=readme, version=version, orig_version=orig_version)
     else:
         requires += deps_default
+
+    print('console_scripts:', console_scripts)
+    entry_points = {'console_scripts': console_scripts}
 
     # NOTE: We must not distinguish between py2/py3 in python_requires and classifiers,
     #       since this will prevent pip2 to find the py2 wheel for versions, which have

@@ -29,13 +29,14 @@ def transpile(target):
 def backport(src_files, **kwargs):
     log.info('backporting: %s', src_files)
     main = kwargs['main']
+    main_dir = os.path.join(*main.split('.'))
     rm('backport')
     mkdir('backport')
     cp(src_files, 'backport', skip=True)
     transpile('backport')
     if main is not None:
         # change tag in main modle
-        sed(r'__tag__[ ]*=.*', "__tag__ = 'py2'", join('backport', main, '__init__.py'))
+        sed(r'__tag__[ ]*=.*', "__tag__ = 'py2'", join('backport', main_dir, '__init__.py'))
     # ignore linter errors caused by transpiler
     sed(r'(ignore[ ]*=[ ]*.*)', '\\1,F401', 'backport/setup.cfg')
 
@@ -311,7 +312,7 @@ def main(argv=None):
     # 1. setup defaults for often required options
     template_src = ['setup.cfg', 'makepy.cfg', 'tox.ini', 'README.md', 'LICENSE.txt']
     common_src = list(datadirs) + list(datafiles) + template_src
-    src = [basename(abspath('.'))] + common_src
+    src = [basename(abspath('.')).split('.')[0]] + common_src
     # 2. create the parser with common options
     p = argparse.MakepyParser().with_logging().with_debug().with_protected_spaces()
     # 3. setup all flags, commands, etc. as aligned one-liners

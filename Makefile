@@ -17,7 +17,7 @@ $(PY_MAKEFILE): Makefile $(MAKEFILES) ; $(MAKEPY) embed --debug -f -i $(MAKEFILE
 $(MAKEPY_COMMANDS) test: $(SRC_FILES) datafiles
 
 # setup makepy script-test
-SCRIPT_TEST = tests/test_examples.sh && tests/test_makepy.sh
+SCRIPT_TEST = tests/test_examples.sh && tests/test_makepy.sh && tests/test_namespace.sh
 test: script-test
 
 # define the docker image for gcr.io
