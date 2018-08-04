@@ -49,7 +49,7 @@ def find_wheel(pkg,tag):
     return glob(join('dist','{}*{}*.whl'.format(pkg,tag)))[0]
 
 def dist(py=py):
-    os.environ['MAKEPYPATH'] = makepypath()
+    # os.environ['MAKEPYPATH'] = makepypath()
     args = ' setup.py bdist_wheel -q -d {pwd}/dist'.format(pwd=pwd())
     run(python(py) + args, cwd=setup_dir(py))
 
@@ -59,7 +59,7 @@ def dists(py=py):
 
 def install(pkg, py=py, source=False):
     if source:
-        os.environ['MAKEPYPATH'] = makepypath()
+        # os.environ['MAKEPYPATH'] = makepypath()
         run('pip{} install --user -e .'.format(py), cwd=setup_dir(py))
         run('pip{}'.format(py), 'show', pkg)
         if setup_dir(py) == 'backport':
@@ -179,17 +179,17 @@ def generate_license_txt(trg):
                YEAR = year(),
                GITHUB_NAME = '@{}'.format(github_name()))
 
-def generate_tests(trg,prj):
+def generate_tests(trg, pkg):
     test_dir  = join(trg, 'tests')
-    test_file = 'test_{}.py'.format(prj)
-    test_func = re.sub('[^A-Za-z0-9_]+','_', prj)
-    test_code = 'def test_{}(): pass\n'.format(test_func)
+    test_name = re.sub('[^A-Za-z0-9_]+','_', pkg)
+    test_file = 'test_{}.py'.format(test_name)
+    test_code = 'def test_{}(): pass\n'.format(test_name)
     mkdir(test_dir)
     write_file(test_file, test_dir, test_code)
 
-def init(trg, pkg, main, ns='.', envlist=None, force=False, mkfiles=False):
+def init(trg, pkg, main, ns=None, envlist=None, force=False, mkfiles=False):
     assert None not in (trg, pkg)
-    pkg_dir = join(trg, ns, pkg)
+    pkg_dir = join(*([trg] + pkg.split('.')))
     prj = re.sub('[^A-Za-z0-9_-]+','-', basename(abspath(trg)))
     mkdir(pkg_dir)
     copy_tools(trg, force=force, mkfiles=mkfiles)
@@ -198,7 +198,7 @@ def init(trg, pkg, main, ns='.', envlist=None, force=False, mkfiles=False):
     generate_toxini(trg, envlist)
     generate_packagefiles(pkg_dir, main)
     generate_readme(trg, prj)
-    generate_tests(trg, ns, pkg)
+    generate_tests(trg, pkg)
     generate_makepy_section(trg, prj, main, ns)
     generate_license_txt(trg)
     log.info('done:\n%s', block(
@@ -353,9 +353,14 @@ def main(argv=None):
     # repair missing args from related args
     args.trg = abspath(args.trg)  # create a valid named path
     pkg = basename(args.trg)      # override default pkg for new trg
+
+
     if args.pkg  is None: args.pkg = args.main
     if args.pkg  is None: args.pkg = pkg
     if args.main is None: args.main = args.pkg
+
+    if '.' in args.pkg: ns = args.pkg.split('.')[0]
+    else:               ns = None
 
     # decide what to do when run without any command
     commands = args.commands
@@ -379,7 +384,7 @@ def main(argv=None):
         elif cmd == 'dev-install': install(pkg=args.pkg, py=args.py, source=True)
         elif cmd == 'lint':        lint(py=args.py)
         elif cmd == 'init':        init(args.trg, args.pkg, args.main,
-                                        envlist=args.envlist, force=args.force, mkfiles=args.mkfiles)
+                                        ns=ns, envlist=args.envlist, force=args.force, mkfiles=args.mkfiles)
         elif cmd == 'format':      format(args.src, force=args.force)
         elif cmd == 'embed':       embed(args.input, args.output, force=args.force)
         elif cmd == 'bumpversion': bumpversion(args.pkg)

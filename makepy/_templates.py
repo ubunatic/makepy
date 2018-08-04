@@ -24,6 +24,8 @@ deps =
     pytest
     flake8
     future
+    makepy
+    wheel
 
 commands = makepy install {{posargs:lint test}}
 whitelist_externals = makepy

@@ -158,6 +158,7 @@ def read_setup_args(cfg_file='setup.cfg'):
     classifiers = cleanup_classifiers(classifiers)
 
     packages = find_packages_ns(ns=namespace)
+    print('packages', packages)
 
     return dict(
         name             = project_name,
