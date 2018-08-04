@@ -26,6 +26,7 @@ deps =
     future
     makepy
     wheel
+    setuptools
 
 commands = makepy install {{posargs:lint test}}
 whitelist_externals = makepy
