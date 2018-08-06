@@ -1,0 +1,19 @@
+# This file lists all packahges fetched from pip.
+# Let's make sure we do not fetch anything that we have not seen before.
+
+# These will always be fetched, alipne packages are missing
+tox<3.0.0
+wheel<=0.31.1
+configparser<=3.5.0
+
+# These are partially preinstalled in alpine, but may ne to be fetched
+# for either Py2 or Py3. Fix them to the bigger versionas shown in
+# `pip2 freeze` vs `pip3 freeze`
+flake8<=3.5.0
+pytest<=3.2.5
+future<=0.15.2
+pyflakes<=2.0.0
+virtualenv<=15.1.0
+typing<=3.6.4
+
+# vim: ft=config

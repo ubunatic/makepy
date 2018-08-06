@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from builtins import open
-from configparser import ConfigParser
+try:                from configparser import ConfigParser
+except ImportError: from ConfigParser import ConfigParser
 from setuptools import find_packages
 import sys, os
 

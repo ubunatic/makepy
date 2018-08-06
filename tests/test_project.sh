@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
 set -o errexit
-set -o verbose
 
 # create a test project and run main makepy commands
 PRJ="$1"
 test -n "$PRJ"  # ensure PRJ is set
 
 ccat(){ pygmentize $@ | head -n 20; }
+
+set -o verbose
 
 # asciinema: START
 # lets create a new project

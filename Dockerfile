@@ -1,29 +1,25 @@
-FROM alpine:3.7
+FROM alpine:3.7 as builder
 LABEL maintainer @ubunatic
 ENV ALPINE_VERSION 3.7
 
 ENV LANG C.UTF-8
 
-ENV REQUIREMENTS "tox<=2.5.0" \
-                 "flake8<=3.5.0" \
-                 "pytest<=3.5.0" \
-                 "wheel<=0.31.0"
+ADD docker-requirements.txt /reqs.txt
+ADD docker-packages.txt     /apks.txt
 
-ENV WORKDIR /workspace/makepy
-ENV PATH    $PATH:$HOME/root/.local/bin
+RUN apk add -U `cat /apks.txt`
 
-RUN apk add --no-cache -U \
-       bash bash-completion git make ca-certificates \
-       python2    python3 \
-       py2-future py3-future \
-       py2-pip    py3-pip \
-       && pip2 install $REQUIREMENTS \
-       && pip3 install $REQUIREMENTS
+RUN pip2 freeze
+RUN pip2 install -r /reqs.txt
+
+RUN pip3 freeze
+RUN pip3 install -r /reqs.txt
 
 # add extras
 RUN apk add py-pygments
 RUN echo "alias ccat=pygmentize" >> /root/.bashrc
 
+ENV WORKDIR /workspace/makepy
 RUN mkdir -p $WORKDIR
 WORKDIR $WORKDIR
 
@@ -33,12 +29,22 @@ ADD examples $WORKDIR/examples
 ADD .gitignore LICENSE.txt README.md $WORKDIR/
 ADD setup.cfg setup.py tox.ini $WORKDIR/
 
-RUN python2 -m makepy install
-RUN python3 -m makepy install
+RUN python3 -m makepy install  # install from local module
+RUN makepy install -P 2        # install backport via makepy from local module
+RUN tests/test_makepy.sh \
+	&& tests/test_namespace.sh \
+	&& tests/test_versions.sh \
+	&& tests/test_project.sh demo_project
 
-# makepy is now installed, we can remove the source from the image
-RUN rm -rf $WORKDIR
- 
-WORKDIR /
+
+FROM alpine:3.7
+
+COPY --from=builder /workspace/makepy/dist  /dist
+COPY --from=builder /apks.txt               /apks.txt
+COPY --from=builder /reqs.txt               /reqs.txt
+
+RUN apk update && apk add -U --no-cache `cat /apks.txt` \
+	&& pip3 install --no-cache-dir -r /reqs.txt /dist/*py3-none-any.whl \
+	&& pip2 install --no-cache-dir -r /reqs.txt /dist/*py2-none-any.whl
 
 ENTRYPOINT ["bash", "-ic"]

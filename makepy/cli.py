@@ -126,7 +126,7 @@ def generate_makefile(trg, main):
     write_file('Makefile', trg, text)
 
 def generate_toxini(trg, envlist=None):
-    if envlist is None: envlist = 'py36,py27,pypy'
+    if envlist is None: envlist = 'py36,py27'
     envline = 'envlist   = ' + envlist
     log.info('using %s', envlist)
     write_file('tox.ini', trg, templates['tox.ini'], envline=envline)
