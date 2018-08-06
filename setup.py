@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
-
-# NOTE: This is a generated, generic setup.py, produced by `makepy init`.
-#       Try to customize the [makepy] section in setup.cfg first, before editing this file.
 from setuptools import setup
-from makepy.project import read_setup_args
-if __name__ == '__main__': setup(**read_setup_args())
+from subprocess import check_output
+import json
+
+def setupargs():
+    try:                import makepy.project as m; return m.read_setup_args()
+    except ImportError: return json.loads(check_output(['makepy', 'setupargs']).decode('utf-8'))
+
+if __name__ == '__main__': setup(**setupargs())

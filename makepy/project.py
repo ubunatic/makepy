@@ -91,7 +91,7 @@ def read_setup_args(cfg_file='setup.cfg'):
     scripts = [s.split('=') for s in d.get('scripts','').strip().split('\n')]
 
     main_dir = os.path.join(project_dir, *main.split('.'))
-    print('main_dir', main_dir, 'main', main)
+    # print('main_dir', main_dir, 'main', main)
     code_version, tag = read_version(main_dir)
     wheeltag          = parse_wheeltag()
     version           = d.get('version', code_version)
@@ -136,7 +136,7 @@ def read_setup_args(cfg_file='setup.cfg'):
     else:
         requires += deps_default
 
-    print('console_scripts:', console_scripts)
+    # print('console_scripts:', console_scripts)
     entry_points = {'console_scripts': console_scripts}
 
     # NOTE: We must not distinguish between py2/py3 in python_requires and classifiers,
@@ -163,7 +163,7 @@ def read_setup_args(cfg_file='setup.cfg'):
     classifiers = cleanup_classifiers(classifiers)
 
     packages = find_packages_ns(ns=namespace)
-    print('packages', packages)
+    # print('packages', packages)
 
     return dict(
         name             = project_name,

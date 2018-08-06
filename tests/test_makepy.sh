@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 
+# installs makepy if needed
+install_makepy() {
+	if which makepy; then
+		echo "using installed makepy"
+	elif test "`basename "$PWD"`" = makepy; then
+		echo "running in makepy dir, using local makepy dist"
+		pip install --no-cache-dir -e "$PWD"
+	else
+		echo "running outside makepy dir, using pypi dist"
+		# pip install --no-cache-dir makepy
+	fi
+}
+
 set -o errexit
 set -o verbose
 
@@ -8,9 +21,6 @@ test -n "$PRJ" || PRJ=test_project
 WORKDIR=$PWD/$PRJ
 mkdir -p $WORKDIR
 cd $WORKDIR
-
-# install makepy if needed
-which makepy || pip install --no-cache-dir makepy
 
 makepy init --debug --trg .
 makepy

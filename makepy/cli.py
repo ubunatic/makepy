@@ -1,8 +1,11 @@
+from __future__ import print_function
 from builtins import str
-import sys, os, re, logging
+import sys, os, re, json, logging
 from datetime import datetime
 from glob import glob
+import makepy
 from makepy import argparse
+from makepy.project import read_setup_args
 from makepy.tox import tox, clean
 from os.path import join, isfile, dirname, abspath, basename
 from makepy.shell import run, cp, call_unsafe, sed, mkdir, rm, block, open
@@ -47,7 +50,13 @@ def setup_dir(py=py):
 def pwd(): return abspath(os.curdir)
 
 def find_wheel(pkg,tag):
-    return glob(join('dist','{}*{}*.whl'.format(pkg,tag)))[0]
+    pkg_base = str(re.sub(r'[_\.-]+', '_', pkg))
+    pat = join('dist','{}*{}*.whl'.format(pkg_base, tag))
+    wheels = glob(pat)
+    if len(wheels) == 0:
+        log.error('failed to find wheels for %s in dist/%s*%s*.whl', pkg, pkg_base, tag)
+        raise IOError(errno.ENOENT, 'no wheels in', pat)
+    return wheels[0]
 
 def dist(py=py):
     # os.environ['MAKEPYPATH'] = makepypath()
@@ -316,7 +325,7 @@ def main(argv=None):
     # 2. create the parser with common options
     p = argparse.MakepyParser().with_logging().with_debug().with_protected_spaces()
     # 3. setup all flags, commands, etc. as aligned one-liners
-    p.opti('commands',    help='makepy command', nargs='*', default=[], metavar='CMD')
+    p.opti('commands',    help='makepy command', nargs='*', metavar='CMD')
     p.flag('tox',         help='run tox tests')
     p.flag('backport',    help='backport project to Python 2')
     p.flag('uninstall',   help='uninstall package from all pips')
@@ -332,6 +341,9 @@ def main(argv=None):
     p.flag('path',        help='print PYHTONPATH to use makepy as module')
     p.flag('format',      help='format python source files using makepy column-aligned formatter')
     p.flag('embed',       help='embed plain text files into pythom code')
+    p.flag('version',     help='show version of developed package')
+    p.flag('bumpversion', help='increase patch version of package')
+    p.flag('setupargs',   help='run read_setup_args in current dir and return as JSON')
 
     p.opti('--py',      '-P', help='set python version  CMD: test, lint, install, uninstall', default=py, type=int)
     p.opti('--pkg',     '-p', help='set package name    CMD: init, install, uninstall')
@@ -344,9 +356,10 @@ def main(argv=None):
     p.opti('--envlist', '-e', help='set tox envlist     CMD: init, tox')
     p.flag('--force',   '-f', help='overwrite files     CMD: init, copy-tools')
     p.flag('--mkfiles', '-k', help='create mk-files     CMD: init, copy_tools')
+    p.flag('--version',       help='show makepy installaton info', dest='version_info')
     # additional help should be available via the 'help' command that
     # provides help for all or some ot the next given option
-    p.flag('help',            help='show contextual help')
+    # p.flag('help',            help='show contextual help')
 
     # 4. parse, analyze, and repair args
     args = p.parse_args(argv)
@@ -363,10 +376,16 @@ def main(argv=None):
     if '.' in args.pkg: ns = args.pkg.split('.')[0]
     else:               ns = None
 
+    if args.version_info:
+        print(makepy.__name__, makepy.__version__, makepy.__tag__)
+        return
+
     # decide what to do when run without any command
     commands = args.commands
-    if len(commands) == 0: tox(wheeltag);  return
     if 'help' in commands: help(commands); return
+    if len(commands) == 0: tox(wheeltag);  return
+
+    # add depending commands
     commands = add_requirements(commands, py=args.py)
 
     # 5. run all passed commands with their shared flags and args
@@ -375,6 +394,7 @@ def main(argv=None):
         elif cmd == 'tox':         tox(args.envlist)
         elif cmd == 'uninstall':   uninstall(args.pkg, py=args.py)
         elif cmd == 'clean':       clean()
+        elif cmd == 'setupargs':   print(json.dumps(read_setup_args()))
         elif cmd == 'include':     print(include())
         elif cmd == 'path':        print(makepypath())
         elif cmd == 'copy':        copy_tools(args.trg, force=args.force, mkfiles=args.mkfiles)

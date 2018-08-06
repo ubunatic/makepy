@@ -16,7 +16,7 @@ and [`structlog`][structlog] setup less cumbersome and less error-prone.<br>
 [`makepy.argparse`](#argparse-module): A module providing a drop-in `ArgumentParser`
 for writing better readable [`argparse`][argparse] code.
 
-Install via `pip install --user makepy`.
+Install via `pip3 install --user makepy`.
 
 mainlog module
 --------------
@@ -29,7 +29,7 @@ The module's main function is [`mainlog.setup_logging`][setup_logging]:
 import logging
 from makepy import mainlog
 
-log = logging.getLogger('pimp-test')
+log = logging.getLogger('app')
 
 def main(argv=None):
     level = logging.INFO
@@ -43,7 +43,7 @@ main()
 The currently supported logging modes are `json` and `console` (default).
 Using `mode='console'` or no mode will produce regular stdlib logs like:
 
-    INFO:pimp-test:Hello makepy!
+    INFO:app:Hello makepy!
 
 Use `mainlog.setup_logging(level=level, use_structlog=True)` to setup `structlog` logging.
 If `struclog` is not installed, stdlib `logging` is used as fallback.
@@ -53,19 +53,20 @@ The predefined structlog settings will format stdlib logs as follows.
     [debug    ] debug msg 2                    [stdlib]
     [error    ] error msg 3                    [stdlib]
 
-If you use structlog loggers in your modules you also get key-value pairs.
+If you use structlog loggers in your modules you also get `extra` key-value pairs.
 
     [info     ] info msg                       [structlog] a=[1, 2, 3] v=1
     [debug    ] debug msg                      [structlog] b=('a', 'b', 'c') v=2
     [error    ] error msg                      [structlog] c={'x': 1} v=3
 
-If [`colorama`][colorama] is installed, the logs will be nicely colored.
+If [`colorama`][colorama] is installed, the logs will be nicely colored (structlog feature).
 
 argparse module
 ---------------
 
-For readability [`makepy.argparse`][mp_argparse] provides a compatible `ArgumentParser`
-that uses the 4-letter `opti` and `flag` methods instead the clumsy `add_argument`.
+For writing better command line apps, [`makepy.argparse`][mp_argparse] provides a compatible
+`ArgumentParser` that uses the 4-letter `opti` and `flag` methods, replacing the original
+`add_argument` method.
 
 ```python
 from makepy import argparse
@@ -81,18 +82,18 @@ p.opti('command',         help='command to run',       choices=['upper','lower']
 Using shorter names and nice alignment allows `argparse` code to be much more readable.
 Yes I know, to allow for such multi-column-based coding, you need to disable some linter rules.
 But it's worth it, not just for `argparse` code, but for better readable Python code in general.
-makepy's `ArgumentParser` also provides a few shortcuts to setup commonly used related modules
+makepy's `ArgumentParser` also provides a few shortcuts to setup other commonly used modules
 directly via the following flags:
 
 * `with_debug`:   adds `--debug` flag
 * `with_logging`: automatically sets up logging using `makepy.mainlog` after parsing args
 * `with_input`:   adds `--input` option, defaulting to `-` (aka. `stdin`)
-* `with_protected_spaces`: will replace spaces in all `help` texts with protected spaces to
-  prevent `argparse` from stripping them. This way, you do not need to setup a special
-  help formatter to achive aligned table-like help texts on the command line.
-  You can just align them in the code! See `makep/cli.py` as an example.
+* `with_protected_spaces`: modifies the `argparse` formatter, to protect white space as defined
+  in your `help` statements. Otherwise `argparse` will strip any newline and repeated spaces,
+  etc., to create condense help paragraphs. Using this option you can now safely align help text
+  directly in your code. See `makep/cli.py` as an example.
 
-To setup debug and logging I usually use this one-liner in my parsers:
+Here is an example to setup common debug and logging features:
 
 ```python
 p = argparse.ArgumentParser(description=desc).with_logging(use_structlog=True).with_debug()
@@ -114,21 +115,21 @@ as used by `mainlog.setup_logging` described [above](#mainlog-module).
 
 makepy command
 --------------
-There is also a `makepy` command that I use to automate project creation, incremental
+This project also provides a `makepy` command, used to automate project creation, incremental
 building, testing via `tox`, and uploading to PyPi.
 
 ![makepy cast](https://storage.googleapis.com/ubunatic-public/makepy/makepy-cli.gif)
 
 Here are some commands supported by `makepy`:
 
-    makepy init --trg ~/workspace/newproject # setup new python project
+    makepy init --trg ~/workspace/newproject # setup new project/package named "newproject"
     cd ~/workspace/newproject                # enter new project
 
     makepy backport     # backport project to python2
-    tox -e py3          # install the current version in testenv and run tests
-    tox                 # install and test in all testenvs
-    makepy              # install and test the default testenv
-    makepy clean        # cleanup test environments
+    tox -e py3          # use `tox` to install and test the package in a Python 3 environment
+    tox                 # install and test in all testenvs defined in `tox.ini`
+    makepy              # install and test in the default testenv
+    makepy clean        # cleanup test environments and build files
 
     makepy dist         # build python wheel for current project
     makepy dist -P 2    # build python wheel for python2
@@ -136,57 +137,66 @@ Here are some commands supported by `makepy`:
     makepy version      # read version string from main __init__.py
     makepy bumpversion  # increase patch level in main __init__.py
     makepy install      # pip install the wheel in the system (may require sudo)
-    makepy dev-install  # pip install the current source code in the system
-    makepy uninstall    # uninstall current project from all pips
+    makepy dev-install  # pip install the current editable source code in the system
+    makepy uninstall    # uninstall current project/package from all pips
 
 You can also chain commands: `makepy clean bumpversion dists`, and `makepy` will reorder
-them and add all required dependent commands, e.g., `makepy install -P 2` is equivalent
+them and add all required depending commands, e.g., `makepy install -P 2` is equivalent
 to `makepy backport dist install -P 2`.
 
-The `makepy` command uses a custom [`project.cfg`][project_cfg], [`tox.ini`][tox_ini],
-[`setup.cfg`][setup_cfg], and a generic py2-py3+ compatible [`setup.py`][setup_py],
-as found in this project. It can also be combined with [`make`][make].
+The `makepy` command depends on and can initialize values in the Python config files
+[`tox.ini`][tox_ini] and [`setup.cfg`][setup_cfg]. It can also create a generic py2-py3+
+compatible [`setup.py`][setup_py], as found in this project.
 
-Run `makepy init --trg PATH_TO_NEW_PROJECT` to setup all required files; use `-f` to allow
+Run `makepy init --trg PATH_TO_NEW_PROJECT` to setup all required files. Use `-f` to allow
 overwriting existing files. See `makepy --help` for more options.
 
 makepy + make
 -------------
 Some makepy functionality is still only available via [`make`][make], using the
-[`make/project.mk`][make_project], [`make/vars.mk`][make_vars], etc. include files. You can still
+[`make/project.mk`][make_project], [`make/vars.mk`][make_vars], etc. include files. You can
 use these in your project. Just copy them to a `make` dir in your project and `include` them
-in your `Makefile`, as [done][makefile] by this project. See each mk-file for details and help.
+in your `Makefile`, as [done][Makefile] by this project. See each mk-file for details and help.
 
 Goals
 -----
-In general the project aims to provide a few flexible tools and modules that should help with daily
-Python programming tasks, when developing your own Python modules, libaries, and command line tools.
+In general the project aims to provide a few flexible tools and modules that should help with
+daily Python programming tasks for developing Python modules, libaries, and command line tools.
 It aims to capture best practices and make them reusable, allowing you to write less and more
-readable code, without breaking flexibility or compatibility of the enhanced modules.
+readable code, without breaking flexibility or compatibility of the enhanced modules and tools.
 
 Motivation
 ----------
 Most Python programmers know [`argparse`][argparse], [`logging`][logging] or
 [`structlog`][structlog], [`tox`][tox] and [`pip`][pip], and many also use [`twine`][twine],
-[`setuptools`][setuptools], and others. However, in my projects I have used the
-same or very similar code and build chains over and over again when using these tools and
-modules. And since I do not like to repeat myself, I wanted to extract the most common
-practices from my projects and make them available for my next projects and for others to use.
+[`setuptools`][setuptools], and others. However, when using these tools you will write the
+same or very similar boilerplate code again and again.
+
+Not wanting to repeat myself, I wanted to extract the most common practices from my projects
+and make them available for my next projects and for others to use.
 
 History
 -------
-Most of the `makepy` commands lived in a huge `Makefile` that had to be copied and augmented
-from project to project, before they were ported to `makepy`. A few still remain in this
-project's `mk` files, such as the `make tag` and `make publish`.
-
 The utility modules to setup `logging` and `argparse`, were scattered in several private
-projects (and reimplemented in corporate projects). I the future I hope to enhance them
-with extra goodies that still remain in these projects, such as a `stackdriver` logging
-mode for the `argparse` module.
+projects (and reimplemented in corporate projects). Most of the `makepy` commands lived in a
+huge `Makefile` that had to be copied and augmented from project to project, before I finally
+started porting features to `makepy`. A few `make` features still remain and can be found in
+this project's `mk` files, such as the `make tag` and `make publish`.
 
 I will keep `makepy` updated, with future learnings and I am happy to welcome pull requests.
 
 Have fun!
+
+Open Issues/Tasks
+-----------------
+* Add support for namespaces.
+* Port doc strings + create readthedocs docs.
+* Port version management to use external `bumpversion` command.
+* Port integration tests from make.
+* Port docker tests from make.
+* Port wheel publishing from make.
+* Port remainder from make + remove make related code.
+
 
 [structlog]:     https://github.com/hynek/structlog
 [colorama]:      https://github.com/tartley/colorama

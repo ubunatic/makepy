@@ -24,7 +24,6 @@ deps =
     pytest
     flake8
     future
-    makepy
     wheel
     setuptools
 
