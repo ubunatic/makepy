@@ -17,24 +17,30 @@ TAG=py`echo "$PY" | cut -d . -f 1`
 
 install_makepy
 
-PRJ=$1
-test -n "$PRJ" || PRJ=test_project
+PKG=$1
+test -n "$PKG" || PKG=demo1
+
+PRJ=`echo "$PKG" | sed 's#[\./\/]\+#-#g'`
+echo "creating test project: $PRJ for package: $PKG in PWD: $PWD"
 WORKDIR=$PWD/$PRJ
 mkdir -p $WORKDIR
 cd $WORKDIR
 
 mp(){ makepy $@ -P 3; }
 
-mp init --debug --trg .
-mp
+mp init --debug -p $PKG
+mp lint
+mp test
 mp dist
 mp backport
+mp dists
+version=`mp version`
 
 cleanup(){
 	err=$?
 	cd $WORKDIR &&
-	# makepy uninstall 2>/dev/null 1>/dev/null &&
-	# rm -rf $WORKDIR
+	makepy uninstall 2>/dev/null 1>/dev/null &&
+	rm -rf $WORKDIR
 	if test $err -eq 0
 	then echo "$0 $PRJ: OK"
 	else echo "$0 $PRJ: FAILED (Err: $err, see logs)"
@@ -42,12 +48,11 @@ cleanup(){
 	return $err
 }
 
-trap cleanup EXIT
+# trap cleanup EXIT
 echo "testing installation"
-mp dists
-version=`mp version`
 echo "PIP_ARGS=$PIP_ARGS"
 $PIP install -I --force-reinstall $PIP_ARGS dist/$PRJ-$version-$TAG-none-any.whl
 which $PRJ | xargs cat
 cd /tmp
 $PRJ
+cleanup

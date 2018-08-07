@@ -6,6 +6,7 @@ import makepy.commands as _cmd
 from makepy import argparse
 from makepy.tox import tox, clean
 from makepy.config import read_setup_args, read_basic_cfg, module_name, package_dir, package_name
+from makepy.shell import pyv, wheeltag
 from os.path import abspath, basename
 
 log = logging.getLogger('makepy')
@@ -38,7 +39,7 @@ def main(argv=None):
     p.flag('bumpversion', help='increase patch version of package')
     p.flag('setupargs',   help='run read_setup_args in current dir and return as JSON')
 
-    p.opti('--py',      '-P', help='set python version  CMD: test, lint, install, uninstall', default=_cmd.py, type=int)
+    p.opti('--py',      '-P', help='set python version  CMD: test, lint, install, uninstall', default=pyv(), type=int)
     p.opti('--pkg',     '-p', help='set package name    CMD: init, install, uninstall')
     p.opti('--src',     '-s', help='set source files    CMD: backport', nargs='*', default=src)
     p.opti('--trg',     '-t', help='set target dir      CMD: init, copy-tools, dist-install', default='.')
@@ -79,6 +80,7 @@ def main(argv=None):
     log.debug('using makepy config: %s:', {
         'args.trg': args.trg,
         'args.pkg': args.pkg,
+        'args.py':  args.py,
         'pkg_name': pkg_name,
         'pkg_dir':  pkg_dir,
         'module':   module,
@@ -93,7 +95,7 @@ def main(argv=None):
     # decide what to do when run without any command
     commands = args.commands
     if 'help' in commands: help(commands); return
-    if len(commands) == 0: tox(_cmd.wheeltag);  return
+    if len(commands) == 0: tox(wheeltag());  return
 
     # add depending commands
     commands = _cmd.add_requirements(commands, py=args.py)

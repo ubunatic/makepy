@@ -1,13 +1,13 @@
 from __future__ import print_function, absolute_import
 
 from builtins import str
-import sys, os, re, json, logging
+import sys, os, re, json, logging, errno
 from datetime import datetime
 from glob import glob
 from os.path import join, isfile, dirname, abspath, basename
 from makepy import argparse
-from makepy.config import read_setup_args, package_dir, read_config
-from makepy.shell import run, cp, call_unsafe, sed, mkdir, rm, block, open
+from makepy.config import read_setup_args, package_dir, read_config, read_basic_cfg, module_name
+from makepy.shell import run, cp, call_unsafe, sed, mkdir, rm, block, open, pyv
 
 # load files and templates
 from makepy._templates import templates
@@ -18,18 +18,19 @@ except: makefiles = {}; makedirs = set()
 
 log = logging.getLogger('makepy')
 
-py       = sys.version_info.major
-wheeltag = 'py{}'.format(py)
-here     = dirname(__file__)
+here = dirname(__file__)
 
-def python(py=py): return 'python{}'.format(py)
+def python(py=None):
+    py = py or pyv()
+    return 'python{}'.format(py)
 
 def transpile(target):
     run('pasteurize -j 8 -w --no-diff ', target)
 
 def backport(src_files, module):
-    log.info('backporting module: %s, files: %s', module, src_files)
     pkg_dir = package_dir(module)
+    src_files = list(src_files) + [pkg_dir]
+    log.info('backporting module: %s, files: %s', module, src_files)
     rm('backport')
     mkdir('backport')
     cp(src_files, 'backport', skip=True)
@@ -40,30 +41,35 @@ def backport(src_files, module):
     # ignore linter errors caused by transpiler
     sed(r'(ignore[ ]*=[ ]*.*)', '\\1,F401', 'backport/setup.cfg')
 
-def setup_dir(py=py):
+def setup_dir(py=None):
+    py = py or pyv()
     if int(py) < 3: return 'backport'
     else:           return '.'
 
 def pwd(): return abspath(os.curdir)
 
 def find_wheel(pkg, tag):
-    pat = join('dist','{}*{}*.whl'.format(pkg, tag))
+    wheel_name = pkg.replace('-','_')
+    pat = join('dist','{}*{}*.whl'.format(wheel_name, tag))
     wheels = glob(pat)
     if len(wheels) == 0:
-        log.error('failed to find wheels for %s in dist/%s*%s*.whl', pkg, pkg, tag)
+        log.error('failed to find wheels for %s in dist/%s*%s*.whl', pkg, wheel_name, tag)
         raise IOError(errno.ENOENT, 'no wheels in', pat)
     return wheels[0]
 
-def dist(py=py):
+def dist(py=None):
+    py = py or pyv()
     # os.environ['MAKEPYPATH'] = makepypath()
     args = ' setup.py bdist_wheel -q -d {pwd}/dist'.format(pwd=pwd())
     run(python(py) + args, cwd=setup_dir(py))
 
-def dists(py=py):
+def dists(py=None):
+    py = py or pyv()
     pys = range(2, max(3, py) + 1)  # include [2,3] + major versions up to `py`
     for py in pys: dist(py=py)
 
-def install(pkg, py=py, source=False):
+def install(pkg, py=None, source=False):
+    py = py or pyv()
     log.info('installing pkg=%s, tag=py%s (editable=%s)', pkg, py, source)
     if source:
         # os.environ['MAKEPYPATH'] = makepypath()
@@ -81,20 +87,32 @@ def install(pkg, py=py, source=False):
     else:
         if os.environ.get('USER', '') != '': opts='-I --user'
         else:                                opts='-I'
+        log.info('running pip%s install %s', py, opts)
         run('pip{} install {}'.format(py, opts), find_wheel(pkg, 'py{}'.format(py)))
 
-def uninstall(pkg, py=py):
+def uninstall(pkg, py=None):
+    py = py or pyv()
     assert pkg is not None
     for p in {'pip', 'pip{}'.format(py), 'pip2', 'pip3'}:
         try: run(p, 'uninstall', '-y', pkg)
         except Exception: pass
 
-def lint(py=py):
+def lint(py=None):
+    py = py or pyv()
     run(python(py) + ' -m flake8', cwd=setup_dir(py))
 
-def test(tests=None, py=py):
+def test(tests=None, py=None):
+    py = py or pyv()
     if tests is None: tests = 'tests'
-    run(python(py) + ' -m pytest -xv', tests)
+    cfg = read_basic_cfg('.')
+    if 'name' in cfg and int(py) < 3:
+        name   = cfg['name']
+        module = cfg.get('module', module_name(name))
+        if len(module.split('.')) > 1:
+            log.warn('skipping py2-pytest for namespaced package %s', module)
+            return
+    else:
+        run(python(py) + ' -m pytest -xv', tests)
 
 def copy_tools(trg, force=False, mkfiles=False):
     mkdir(trg)
@@ -193,7 +211,7 @@ def generate_tests(trg, module):
     test_dir  = join(trg, 'tests')
     test_name = re.sub('[^A-Za-z0-9_]+','_', module)
     test_file = 'test_{}.py'.format(test_name)
-    test_code = 'def test_{}(): pass\n'.format(test_name)
+    test_code = 'import {m}\ndef test_{n}(): assert {m} is not None\n'.format(m=module, n=test_name)
     mkdir(test_dir)
     write_file(test_file, test_dir, test_code)
 
@@ -298,7 +316,8 @@ def uniqlist(data):
         if v not in uniq: uniq.append(v)
     return uniq
 
-def add_requirements(commands, py=py):
+def add_requirements(commands, py=None):
+    py = py or pyv()
     # complete dependencies
     cmds = commands[:]
     req3 = [('install',     'dist'),         # system install requires dist

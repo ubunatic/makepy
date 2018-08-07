@@ -41,6 +41,18 @@ def run(args, *more_args, **PopenArgs):
     log.debug("run: %s, %s", argstr(args), PopenArgs)
     return subprocess.check_call(args, **PopenArgs)
 
+_py = None
+
+def pyv():
+    """Calls `python` determine and return default major python version."""
+    global _py
+    if _py is None:
+        val = call_unsafe('python', '-c', 'import sys; sys.stdout.write(str(sys.version_info.major))').strip()
+        _py = int(val)
+    return _py
+
+def wheeltag(): return 'py{}'.format(pyv())
+
 def call(args, *more_args, **PopenArgs):
     args = arglist(args, more_args)
     log.debug("call: %s, %s (py:%s)", argstr(args), PopenArgs, sys.version_info.major)

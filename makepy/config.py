@@ -43,10 +43,11 @@ def read_version(pkg_dir, init='__init__.py'):
 
 def parse_wheeltag(args=None):
     if args is None: args = sys.argv[1:]
-    wheeltag = 'py{}'.format(sys.version_info.major)
+    from makepy.shell import wheeltag
+    wt = wheeltag()
     for i, arg in enumerate(args):
-        if arg == '--python-tag': wheeltag = args[i+1]
-    return wheeltag
+        if arg == '--python-tag': wt = args[i+1]
+    return wt
 
 def read_makepy_section(*files, allow_empty=False, cwd='.'):
     files = set(os.path.join(cwd, f) for f in  list(files) + ['makepy.cfg', 'setup.cfg'])
