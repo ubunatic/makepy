@@ -17,7 +17,7 @@ def main(argv=None):
     common_src = list(_cmd.datadirs) + list(_cmd.datafiles) + template_src
     src = [basename(abspath('.')).split('.')[0]] + common_src
     # 2. create the parser with common options
-    p = argparse.MakepyParser().with_logging().with_debug().with_protected_spaces()
+    p = argparse.MakepyParser().with_logging(use_structlog=True).with_debug().with_protected_spaces()
     # 3. setup all flags, commands, etc. as aligned one-liners
     p.opti('commands',    help='makepy command', nargs='*', metavar='CMD')
     p.flag('tox',         help='run tox tests')

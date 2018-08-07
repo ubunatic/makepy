@@ -21,6 +21,7 @@ PKG=$1
 test -n "$PKG" || PKG=demo1
 
 PRJ=`echo "$PKG" | sed 's#[\./\/]\+#-#g'`
+WHL=`echo "$PKG" | sed 's#[\./\/-]\+#_#g'`
 echo "creating test project: $PRJ for package: $PKG in PWD: $PWD"
 WORKDIR=$PWD/$PRJ
 mkdir -p $WORKDIR
@@ -51,7 +52,7 @@ cleanup(){
 # trap cleanup EXIT
 echo "testing installation"
 echo "PIP_ARGS=$PIP_ARGS"
-$PIP install -I --force-reinstall $PIP_ARGS dist/$PRJ-$version-$TAG-none-any.whl
+$PIP install -I --force-reinstall $PIP_ARGS dist/$WHL-$version-$TAG-none-any.whl
 which $PRJ | xargs cat
 cd /tmp
 $PRJ

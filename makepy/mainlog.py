@@ -1,6 +1,10 @@
 import logging, sys  # noqa:F401
 
-try: import structlog
+try:
+    import structlog
+    from structlog.stdlib import ProcessorFormatter  # noqa: F401
+    # ProcessorFormatter is available in newer versions of structlog, using this import
+    # we can force fail older versions of structlog.
 except ImportError: structlog = None
 try: import colorama
 except ImportError: colorama = None
