@@ -1,326 +1,19 @@
-from __future__ import print_function
-from builtins import str
-import sys, os, re, json, logging
-from datetime import datetime
-from glob import glob
-import makepy
-from makepy import argparse
-from makepy.project import read_setup_args
-from makepy.tox import tox, clean
-from os.path import join, isfile, dirname, abspath, basename
-from makepy.shell import run, cp, call_unsafe, sed, mkdir, rm, block, open
-from makepy.project import read_config
+from __future__ import absolute_import
 
-# load files and templates
-from makepy._templates import templates
-try:    from makepy._datafiles import dirs as datadirs, files as datafiles
-except: datafiles = {}; datadirs = set()
-try:    from makepy._makefiles import dirs as makedirs, files as makefiles
-except: makefiles = {}; makedirs = set()
+import json, logging
+import makepy as _makepy
+import makepy.commands as _cmd
+from makepy import argparse
+from makepy.tox import tox, clean
+from makepy.config import read_setup_args, read_basic_cfg, module_name, package_dir, package_name
+from os.path import abspath, basename
 
 log = logging.getLogger('makepy')
-
-py       = sys.version_info.major
-wheeltag = 'py{}'.format(py)
-here     = dirname(__file__)
-
-def python(py=py): return 'python{}'.format(py)
-
-def transpile(target):
-    run('pasteurize -j 8 -w --no-diff ', target)
-
-def backport(src_files, **kwargs):
-    log.info('backporting: %s', src_files)
-    main = kwargs['main']
-    main_dir = os.path.join(*main.split('.'))
-    rm('backport')
-    mkdir('backport')
-    cp(src_files, 'backport', skip=True)
-    transpile('backport')
-    if main is not None:
-        # change tag in main modle
-        sed(r'__tag__[ ]*=.*', "__tag__ = 'py2'", join('backport', main_dir, '__init__.py'))
-    # ignore linter errors caused by transpiler
-    sed(r'(ignore[ ]*=[ ]*.*)', '\\1,F401', 'backport/setup.cfg')
-
-def setup_dir(py=py):
-    if int(py) < 3: return 'backport'
-    else:           return '.'
-
-def pwd(): return abspath(os.curdir)
-
-def find_wheel(pkg,tag):
-    pkg_base = str(re.sub(r'[_\.-]+', '_', pkg))
-    pat = join('dist','{}*{}*.whl'.format(pkg_base, tag))
-    wheels = glob(pat)
-    if len(wheels) == 0:
-        log.error('failed to find wheels for %s in dist/%s*%s*.whl', pkg, pkg_base, tag)
-        raise IOError(errno.ENOENT, 'no wheels in', pat)
-    return wheels[0]
-
-def dist(py=py):
-    # os.environ['MAKEPYPATH'] = makepypath()
-    args = ' setup.py bdist_wheel -q -d {pwd}/dist'.format(pwd=pwd())
-    run(python(py) + args, cwd=setup_dir(py))
-
-def dists(py=py):
-    pys = range(2, max(3, py) + 1)  # include [2,3] + major versions up to `py`
-    for py in pys: dist(py=py)
-
-def install(pkg, py=py, source=False):
-    if source:
-        # os.environ['MAKEPYPATH'] = makepypath()
-        run('pip{} install --user -e .'.format(py), cwd=setup_dir(py))
-        run('pip{}'.format(py), 'show', pkg)
-        if setup_dir(py) == 'backport':
-            sys.stderr.write(block(
-                """
-                ### Attention ###
-                Installed {PKG} backport!'
-                You must run `makepy backport` to update the installation'
-                ### Attention ###
-                """, PKG=pkg
-            ))
-    else:
-        run('pip{} install'.format(py), find_wheel(pkg, 'py{}'.format(py)))
-
-def uninstall(pkg, py=py):
-    assert pkg is not None
-    for p in {'pip', 'pip{}'.format(py), 'pip2', 'pip3'}:
-        try: run(p, 'uninstall', '-y', pkg)
-        except Exception: pass
-
-def lint(py=py):
-    run(python(py) + ' -m flake8', cwd=setup_dir(py))
-
-def test(tests=None, py=py):
-    if tests is None: tests = 'tests'
-    run(python(py) + ' -m pytest -xv', tests)
-
-def copy_tools(trg, force=False, mkfiles=False):
-    mkdir(trg)
-    files = datafiles.copy(); dirs = list(datadirs)
-    if mkfiles: files.update(makefiles); dirs += list(makedirs)
-    # create project tools that do not have any custom code
-    for d in dirs: mkdir(join(trg,d))
-    for f, text in files.items(): write_file(f, trg, text, force=force)
-    log.info('copied tools: %s -> %s', list(files) + ['setup.py'], trg)
-
-def write_file(name, trg_dir, text, force=False, strip=True, mode='w', **fmt):
-    trg = join(trg_dir, name)
-    if isfile(trg) and not (force or 'a' in mode):
-        log.debug('skipping to write: %s', trg)
-        return
-    if strip: text = '{}\n'.format(text.strip())
-    if len(fmt) > 0: text = text.format(**fmt)
-    # log.debug('write %s, mode=%s, text="%s"', trg, mode, text)
-    with open(trg, mode) as f: f.write(str(text))
-
-def generate_makefile(trg, main):
-    if main is not None:
-        log.info('using MAIN=%s as main module.', main)
-        text = templates['Makefile'].format(MAIN=main)
-    else:
-        log.info('using empty MAIN (use -m MAIN to set a custom main module).')
-        text = 'include $(shell makepy include)\n'
-    write_file('Makefile', trg, text)
-
-def generate_toxini(trg, envlist=None):
-    if envlist is None: envlist = 'py36,py27'
-    envline = 'envlist   = ' + envlist
-    log.info('using %s', envlist)
-    write_file('tox.ini', trg, templates['tox.ini'], envline=envline)
-
-def generate_packagefiles(pkg_dir, main):
-    write_file('__init__.py', pkg_dir, templates['__init__.py'].format(MAIN=main))
-    write_file('__main__.py', pkg_dir, templates['__main__.py'].format(MAIN=main))
-
-def user_name():
-    name = call_unsafe('git config --get user.name').strip()
-    log.debug('git user.name: %s', name)
-    if name == '': name = str(os.environ.get('USER', 'System Root'))
-    return name
-
-def safe_name(): return str(re.sub(r'[^a-z0-9_\.-]', '.', user_name().lower()))
-
-def github_name(): return str(os.environ.get('GITHUB_NAME', safe_name()))
-
-def user_email():
-    email = call_unsafe('git config --get user.email').strip()
-    if email == '': email = safe_name() + '@gmail.com'
-    return str(email)
-
-def date(fmt='%Y-%m-%d', dt=None):
-    if dt is None: dt = datetime.utcnow()
-    return dt.strftime(fmt)
-
-def year(): return datetime.utcnow().year
-
-def generate_readme(trg, prj):
-    COPY_INFO = 'Copyright (c) {} {} {}'.format(date('%Y'), user_name(), user_email())
-    log.debug('using COPY_INFO = %s', COPY_INFO)
-    write_file('README.md', trg, templates['README.md'], NEW_PRJ=prj, COPY_INFO=COPY_INFO)
-
-def generate_setup_cfg(trg):
-    write_file('setup.cfg', trg, templates['setup.cfg'])
-
-def generate_makepy_section(trg, prj, main, ns):
-    t = join(trg, 'setup.cfg')
-    if isfile(t):
-        if  'makepy' in read_config(t):
-            log.info('skipping to update existing makepy section in %s', t)
-            return
-        log.info('adding makepy section to %s', t)
-        mode = 'a'; strip = False
-    else:
-        mode = 'w'; strip = True
-
-    write_file('setup.cfg', trg, templates['makepy.cfg'], mode=mode, strip=strip,
-               NAME = user_name(),
-               EMAIL = user_email(),
-               GITHUB_NAME = github_name(),
-               PROJECT = prj,
-               MAIN = main,
-               NAMESPACE = ns)
-
-def generate_license_txt(trg):
-    write_file('LICENSE.txt', trg, templates['LICENSE_txt'],
-               NAME = user_name(),
-               YEAR = year(),
-               GITHUB_NAME = '@{}'.format(github_name()))
-
-def generate_tests(trg, pkg):
-    test_dir  = join(trg, 'tests')
-    test_name = re.sub('[^A-Za-z0-9_]+','_', pkg)
-    test_file = 'test_{}.py'.format(test_name)
-    test_code = 'def test_{}(): pass\n'.format(test_name)
-    mkdir(test_dir)
-    write_file(test_file, test_dir, test_code)
-
-def init(trg, pkg, main, ns=None, envlist=None, force=False, mkfiles=False):
-    assert None not in (trg, pkg)
-    pkg_dir = join(*([trg] + pkg.split('.')))
-    prj = re.sub('[^A-Za-z0-9_-]+','-', basename(abspath(trg)))
-    mkdir(pkg_dir)
-    copy_tools(trg, force=force, mkfiles=mkfiles)
-    generate_setup_cfg(trg)
-    generate_makefile(trg, main)
-    generate_toxini(trg, envlist)
-    generate_packagefiles(pkg_dir, main)
-    generate_readme(trg, prj)
-    generate_tests(trg, pkg)
-    generate_makepy_section(trg, prj, main, ns)
-    generate_license_txt(trg)
-    log.info('done:\n%s', block(
-        """
-        -------------------------------------------
-        Created new project: {NEW_PRJ} in {TARGET}!
-        You can now build it using make:
-        -------------------------------------------
-        cd {TARGET}
-        make
-        make dist
-        -------------------------------------------
-        """,
-        NEW_PRJ=prj, TARGET=trg
-    ))
-
-r_version = r'(__version__[^0-9]+)([0-9\.]+)([^0-9]+)'
-def version(pkg):
-    init = join(pkg, '__init__.py')
-    with open(init) as f:
-        for line in f:
-            m = re.match(r_version, line)
-            if m is not None:
-                v = m.groups()[1]
-                log.debug('found version: %s==%s', pkg, v)
-                print(v)
-
-def bumpversion(pkg):
-    init = join(pkg, '__init__.py')
-    lines = []
-    with open(init) as f:
-        for line in f:
-            m = re.match(r_version, line)
-            if m is not None:
-                pre, version, post = m.groups()
-                ma, mi, pa = version.split('.')
-                pa = str(int(pa) + 1)
-                version = '.'.join([ma, mi, pa])
-                log.info('bumpversion to %s', version)
-                line = pre + version + post
-            lines.append(line)
-    with open(init, 'w') as f: f.writelines(lines)
-
-def format(src_files, force=False):
-    # TODO: implement modern multi-column-aware unorthodox Python formatter
-    print('ATTENTION: Formatting not implemented!')
-    for f in src_files:
-        if not f.endswith('.py'): print('skipping:', f); continue
-        print('Fake formatting:', f, 'OK')
-
-def embed(src_files, target, force=False):
-    if isfile(target) and not force:
-        log.debug('skippig to overwrite embedding target %s', target)
-        return
-    log.info('embedding %s in %s', src_files, target)
-    with open(target, 'w') as f:
-        pre = ('# flake8:noqa=W191\n'
-               'from __future__ import unicode_literals\n'
-               'files = {}\n'
-               'dirs  = set()\n')
-        f.write(str(pre))
-        for p in src_files:
-            if p.startswith('./'): p = p[2:]
-            d = dirname(p); code = '\n'
-            if d in ('.',''): p = basename(p)
-            else:             code += "dirs.add('{d}')\n".format(d=d)
-            with open(p) as src: text = src.read()
-            t = text.replace('\\', '\\\\').replace('"""','\\"\\"\\"').replace('\t', '\\t')
-            v = re.sub(r'[^a-zA-Z0-9_]+', '_', p)
-            code += "files['{p}'] = {v} = {q}\n{t}{q}\n".format(p=p, v=v, t=t, q='"""')
-            log.debug('embed %s -> %s (%dchr)', p, target, len(text))
-            f.write(str(code))
-
-def help(commands):
-    # TODO: implement contextual help
-    print('ATTENTION: Contextual help is work-in-progress!')
-    for cmd in commands: print('no contextual help found for command:', cmd)
-
-def include():
-    # TODO: use tmp mk file or located dist installed version
-    return 'project.mk'
-
-def makepypath(): return (abspath(join(here,'..')))
-
-def uniqlist(data):
-    uniq = []
-    for v in data:
-        if v not in uniq: uniq.append(v)
-    return uniq
-
-def add_requirements(commands, py=py):
-    # complete dependencies
-    cmds = commands[:]
-    req3 = [('install',     'dist'),         # system install requires dist
-            ('dists',       'backport')]     # py2 dist requires backport
-    req2 = [('dev-install', 'backport'),     # py2 source install requires backport
-            ('dist',        'backport')]     # py2 dist requires backport
-    req0 = [('clean',       'clean'),        # move clean to front
-            ('bumpversion', 'bumpversion')]  # move bumpversion even before clean
-
-    if py >= 3: req2 = []                    # skip py2 requirements for py3
-
-    for reqs in [req3, req2, req0]:
-        for target, r in reqs:
-            if target in cmds: cmds.insert(0, r)
-
-    return uniqlist(cmds)
 
 def main(argv=None):
     # 1. setup defaults for often required options
     template_src = ['setup.cfg', 'makepy.cfg', 'tox.ini', 'README.md', 'LICENSE.txt']
-    common_src = list(datadirs) + list(datafiles) + template_src
+    common_src = list(_cmd.datadirs) + list(_cmd.datafiles) + template_src
     src = [basename(abspath('.')).split('.')[0]] + common_src
     # 2. create the parser with common options
     p = argparse.MakepyParser().with_logging().with_debug().with_protected_spaces()
@@ -345,7 +38,7 @@ def main(argv=None):
     p.flag('bumpversion', help='increase patch version of package')
     p.flag('setupargs',   help='run read_setup_args in current dir and return as JSON')
 
-    p.opti('--py',      '-P', help='set python version  CMD: test, lint, install, uninstall', default=py, type=int)
+    p.opti('--py',      '-P', help='set python version  CMD: test, lint, install, uninstall', default=_cmd.py, type=int)
     p.opti('--pkg',     '-p', help='set package name    CMD: init, install, uninstall')
     p.opti('--src',     '-s', help='set source files    CMD: backport', nargs='*', default=src)
     p.opti('--trg',     '-t', help='set target dir      CMD: init, copy-tools, dist-install', default='.')
@@ -365,51 +58,68 @@ def main(argv=None):
     args = p.parse_args(argv)
 
     # repair missing args from related args
-    args.trg = abspath(args.trg)  # create a valid named path
-    pkg = basename(args.trg)      # override default pkg for new trg
+    trg  = abspath(args.trg)  # create a valid named path
+    pkg  = args.pkg
+    main = args.main
 
+    if pkg  is None: pkg = basename(trg)     # derive package name from target path if not given
+    module = module_name(pkg)                # derive moduile name from package argument
+    if main is None: main = module + '.cli'  # set default main module
+    pkg_name = package_name(pkg)             # the actual package name may differ from the package argument
 
-    if args.pkg  is None: args.pkg = args.main
-    if args.pkg  is None: args.pkg = pkg
-    if args.main is None: args.main = args.pkg
+    # trying to use values from setup.cfg
+    cfg = read_basic_cfg(trg)
+    if 'name' in cfg:
+        pkg_name = cfg['name']                               # name must be in cfg
+        module   = cfg.get('module', module_name(pkg_name))  # get or derive module from name
+        main     = cfg.get('main',   module + '.cli')        # get or set default main module
 
-    if '.' in args.pkg: ns = args.pkg.split('.')[0]
-    else:               ns = None
+    pkg_dir  = package_dir(module)
+
+    log.debug('using makepy config: %s:', {
+        'args.trg': args.trg,
+        'args.pkg': args.pkg,
+        'pkg_name': pkg_name,
+        'pkg_dir':  pkg_dir,
+        'module':   module,
+        'main':     main,
+        'from_setup_cfg': 'name' in cfg,
+    })
 
     if args.version_info:
-        print(makepy.__name__, makepy.__version__, makepy.__tag__)
+        print(_makepy.__name__, _makepy.__version__, _makepy.__tag__)
         return
 
     # decide what to do when run without any command
     commands = args.commands
     if 'help' in commands: help(commands); return
-    if len(commands) == 0: tox(wheeltag);  return
+    if len(commands) == 0: tox(_cmd.wheeltag);  return
 
     # add depending commands
-    commands = add_requirements(commands, py=args.py)
+    commands = _cmd.add_requirements(commands, py=args.py)
 
     # 5. run all passed commands with their shared flags and args
     for cmd in commands:
-        if   cmd == 'backport':    backport(args.src, main=args.main)
+        if   cmd == 'backport':    _cmd.backport(args.src, module)
         elif cmd == 'tox':         tox(args.envlist)
-        elif cmd == 'uninstall':   uninstall(args.pkg, py=args.py)
+        elif cmd == 'uninstall':   _cmd.uninstall(pkg_name, py=args.py)
         elif cmd == 'clean':       clean()
         elif cmd == 'setupargs':   print(json.dumps(read_setup_args()))
-        elif cmd == 'include':     print(include())
-        elif cmd == 'path':        print(makepypath())
-        elif cmd == 'copy':        copy_tools(args.trg, force=args.force, mkfiles=args.mkfiles)
-        elif cmd == 'test':        test(tests=args.tests, py=args.py)
-        elif cmd == 'dist':        dist(py=args.py)
-        elif cmd == 'dists':       dists(py=args.py)
-        elif cmd == 'install':     install(pkg=args.pkg, py=args.py, source=False)
-        elif cmd == 'dev-install': install(pkg=args.pkg, py=args.py, source=True)
-        elif cmd == 'lint':        lint(py=args.py)
-        elif cmd == 'init':        init(args.trg, args.pkg, args.main,
-                                        ns=ns, envlist=args.envlist, force=args.force, mkfiles=args.mkfiles)
+        elif cmd == 'include':     print(_cmd.include())
+        elif cmd == 'path':        print(_cmd.makepypath())
+        elif cmd == 'copy':        _cmd.copy_tools(trg, force=args.force, mkfiles=args.mkfiles)
+        elif cmd == 'test':        _cmd.test(tests=args.tests, py=args.py)
+        elif cmd == 'dist':        _cmd.dist(py=args.py)
+        elif cmd == 'dists':       _cmd.dists(py=args.py)
+        elif cmd == 'install':     _cmd.install(pkg_name, py=args.py, source=False)
+        elif cmd == 'dev-install': _cmd.install(pkg_name, py=args.py, source=True)
+        elif cmd == 'lint':        _cmd.lint(py=args.py)
+        elif cmd == 'init':        _cmd.init(trg, pkg_name, module, main,
+                                             envlist=args.envlist, force=args.force, mkfiles=args.mkfiles)
         elif cmd == 'format':      format(args.src, force=args.force)
-        elif cmd == 'embed':       embed(args.input, args.output, force=args.force)
-        elif cmd == 'bumpversion': bumpversion(args.pkg)
-        elif cmd == 'version':     version(args.pkg)
+        elif cmd == 'embed':       _cmd.embed(args.input, args.output, force=args.force)
+        elif cmd == 'bumpversion': _cmd.bumpversion(pkg_dir)
+        elif cmd == 'version':     _cmd.version(pkg_dir)
         else:                      raise ValueError('invalid command: {}'.format(cmd))
 
 if __name__ == '__main__': main()

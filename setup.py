@@ -5,7 +5,7 @@ from subprocess import check_output
 import json
 
 def setupargs():
-    try:                import makepy.project as m; return m.read_setup_args()
+    try:                import makepy.config as m; return m.read_setup_args()
     except ImportError: return json.loads(check_output(['makepy', 'setupargs']).decode('utf-8'))
 
 if __name__ == '__main__': setup(**setupargs())

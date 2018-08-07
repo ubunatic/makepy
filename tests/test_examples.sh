@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 
+source `dirname $0`/install.rc
+
 set -o errexit
+set -o verbose
 
-self=`readlink -f $0`
-here=`dirname $self`
-project=`dirname $here`
-examples="$project/examples"
+install_makepy
 
-# either use local source or install from pypi
-test -e $project/makepy || pip install --no-cache-dir makepy
+project=`readlink -f "$PWD"`
 
-for f in `find $examples -name '*.py'`; do
+for f in `find $project/examples -name '*.py'`; do
 	cmd="python $f --help"
 	echo -n "testing '$cmd':"
 	PYTHONPATH=$PYTHONPATH:$project $cmd >/dev/null
 	echo -e "OK"
 done 1>&2
+

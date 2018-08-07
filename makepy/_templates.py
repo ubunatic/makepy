@@ -21,11 +21,9 @@ skipsdist = True
 
 [testenv]
 deps =
-    pytest
-    flake8
-    future
-    wheel
-    setuptools
+    flake8<=3.5.0
+    pytest<=3.2.5
+    future<=0.15.2
 
 commands = makepy install {{posargs:lint test}}
 whitelist_externals = makepy
@@ -63,22 +61,24 @@ templates['__init__.py'] = __init___py = """
 # {flake_rules}
 __version__ = '0.0.1'
 __tag__     = 'py3'
-
-def main(argv=None):
-    import logging
-    from makepy import argparse
-    log = logging.getLogger(__name__)
-    p = argparse.ArgumentParser().with_logging().with_debug()
-    args = p.parse_args(argv)
-    log.info('main called with %s', args)
 """.format(flake_rules = 'noqa: F401')
 
 templates['__main__.py'] = __main___py = """
 # {flake_rules}
-from __future__ import absolute_import
 from {{MAIN}} import main
 main()
 """.format(flake_rules = 'noqa: F401')
+
+templates['cli.py'] = cli_py = """
+import logging
+from makepy import argparse
+
+def main(argv=None):
+    log = logging.getLogger(__name__)
+    p = argparse.ArgumentParser().with_logging().with_debug()
+    args = p.parse_args(argv)
+    log.info('main called with %s', args)
+"""
 
 templates['README.md'] = README_md = """
 {NEW_PRJ}
@@ -104,8 +104,8 @@ github_name = {GITHUB_NAME}
 license     = MIT  # if changed, also update the classifiers
 description = {PROJECT}: My Python project
 name        = {PROJECT}
+module      = {MODULE}
 main        = {MAIN}
-namespace   = {NAMESPACE}
 
 # 3 - Alpha, 4 - Beta, 5 - Production/Stable
 status = Development Status :: 3 - Alpha

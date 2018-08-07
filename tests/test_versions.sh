@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
+source `dirname $0`/install.rc
+
 set -o errexit
 set -o verbose
+
+install_makepy
 
 PRJ=test_project
 WORKDIR=$PWD/$PRJ

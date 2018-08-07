@@ -1,9 +1,10 @@
-from __future__ import absolute_import
-from builtins import open
+from builtins import open, str
 try:                from configparser import ConfigParser
 except ImportError: from ConfigParser import ConfigParser
 from setuptools import find_packages
-import sys, os
+import sys, os, logging
+
+log = logging.getLogger('makepy')
 
 PKG_EXCLUDES = ('contrib', 'docs', 'tests', 'backport', 'vendor')
 
@@ -28,10 +29,10 @@ def unquote(s): return s.replace('"','').replace("'",'').strip()
 def cleanup_classifiers(classifiers):
     return [c for c in classifiers if c.strip() != ""]
 
-def read_version(main_dir, init='__init__.py'):
-    assert '.' not in os.path.basename(main_dir)
+def read_version(pkg_dir, init='__init__.py'):
+    assert '.' not in os.path.basename(pkg_dir)
     version = tag = None
-    init = os.path.join(main_dir, init)
+    init = os.path.join(pkg_dir, init)
     for l in read_lines(init):
         if   l.startswith('__version__'): version = unquote(l.split('=')[1])
         elif l.startswith('__tag__'):     tag     = unquote(l.split('=')[1])
@@ -47,22 +48,45 @@ def parse_wheeltag(args=None):
         if arg == '--python-tag': wheeltag = args[i+1]
     return wheeltag
 
-def read_makepy_section(*files):
-    files = set(tuple(files) + ('makepy.cfg', 'setup.cfg'))
-    d = None
+def read_makepy_section(*files, allow_empty=False, cwd='.'):
+    files = set(os.path.join(cwd, f) for f in  list(files) + ['makepy.cfg', 'setup.cfg'])
+    d = {}
     for f in files:
         if os.path.isfile(f): d = read_config(f).get('makepy')
-        if d is not None: break
-    if d is None:
+        if len(d) > 0: break
+    if d is None and not allow_empty:
         raise Exception('[makepy] section not found in config files', files,
                         os.listdir('.'))
     return d
 
-def find_packages_ns(ns=None):
-    if ns is None: ns = '.'
-    pkgs = find_packages(ns, exclude=PKG_EXCLUDES)
+def find_packages_ns(ns, exclude=PKG_EXCLUDES, allow_empty=False):
+    # TODO: find out where "None" string comes from
+    assert ns is not None, "missing namespace"
+    assert ns != 'None',   "invalid namespace"
+    if ns == '': ns = '.'
+    pkgs = find_packages(ns, exclude=exclude)
+    assert allow_empty or len(pkgs) > 0, "no packages found in namespace: " + ns
     if ns != '.': pkgs = ['{}.{}'.format(ns, p) for p in pkgs]
     return pkgs
+
+def package_dir(module):
+    return os.path.join(*module.split('.'))
+
+def package_name(module):
+    return module.replace('.', '-')
+
+def module_name(pkg_dir):
+    return pkg_dir.replace('-', '_').replace('/', '.').replace('\\', '.')
+
+def read_basic_cfg(trg):
+    d = read_makepy_section(allow_empty=True, cwd=trg)
+    if len(d) > 0:
+        log.debug('loaded values from %s: %s', trg, {
+            'name':   d.get('name',   ''),
+            'module': d.get('module', ''),
+            'main':   d.get('main',   ''),
+        })
+    return d
 
 def read_setup_args(cfg_file='setup.cfg'):
     d = read_makepy_section(cfg_file)
@@ -73,8 +97,8 @@ def read_setup_args(cfg_file='setup.cfg'):
 
     name      = d['name']
     license   = d['license']
-    main      = d['main']
-    namespace = d.get('namespace', '.')
+    module    = d.get('module', module_name(name))
+    main      = d.get('main', module)
     binary    = d.get('binary')
     requires  = d.get('requires','').split(' ')
     keywords  = d.get('keywords','').split(' ')
@@ -91,9 +115,9 @@ def read_setup_args(cfg_file='setup.cfg'):
 
     scripts = [s.split('=') for s in d.get('scripts','').strip().split('\n')]
 
-    main_dir = os.path.join(project_dir, *main.split('.'))
-    # print('main_dir', main_dir, 'main', main)
-    code_version, tag = read_version(main_dir)
+    pkg_dir = os.path.join(project_dir, *module.split('.'))
+    log.debug('read_setup_args: pkg_dir=%s, module=%s', pkg_dir, module)
+    code_version, tag = read_version(pkg_dir)
     wheeltag          = parse_wheeltag()
     version           = d.get('version', code_version)
     if version != code_version:
@@ -137,7 +161,7 @@ def read_setup_args(cfg_file='setup.cfg'):
     else:
         requires += deps_default
 
-    # print('console_scripts:', console_scripts)
+    log.debug('console_scripts: %s', console_scripts)
     entry_points = {'console_scripts': console_scripts}
 
     # NOTE: We must not distinguish between py2/py3 in python_requires and classifiers,
@@ -163,8 +187,13 @@ def read_setup_args(cfg_file='setup.cfg'):
 
     classifiers = cleanup_classifiers(classifiers)
 
-    packages = find_packages_ns(ns=namespace)
-    # print('packages', packages)
+    # TODO: support multi level namespaces
+    pkg_dir = module.split('.')
+    if len(pkg_dir) == 1: ns = '.'
+    else:                 ns = pkg_dir[0]
+
+    packages = find_packages_ns(ns)
+    log.debug('packages: %s, namespace: %s', packages, ns)
 
     return dict(
         name             = project_name,

@@ -1,0 +1,21 @@
+# installs makepy if needed
+
+test -n "$PIP"      || PIP=pip
+test -n "$PIP_ARGS" || PIP_ARGS=
+
+install_makepy() {
+	echo -n "installing makepy..."
+	if $PIP freeze | grep makepy; then
+		echo "\b\b\b: using installed makepy"
+	elif test "`basename "$PWD"`" = makepy; then
+		echo "\b\b\b: running in makepy dir, using local makepy dist"
+		$PIP install -I $PIP_ARGS --no-cache-dir -e "$PWD"
+	else
+		echo "\b\b\b: running outside makepy dir, using pypi dist"
+		$PIP install $PIP_ARGS --no-cache-dir makepy
+	fi
+}
+
+ccat(){ pygmentize $@ | head -n 20; }
+
+# vim: ft=sh

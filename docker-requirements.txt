@@ -2,6 +2,7 @@
 # Let's make sure we do not fetch anything that we have not seen before.
 
 # These will always be fetched, alipne packages are missing
+pip>=18.0
 tox<3.0.0
 wheel<=0.31.1
 configparser<=3.5.0

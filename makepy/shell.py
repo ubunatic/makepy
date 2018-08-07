@@ -1,5 +1,4 @@
-from builtins import open as _open
-from builtins import str
+from builtins import str, open as _open
 import subprocess, re, logging, os, sys
 from contextlib import contextmanager
 import shutil as sh

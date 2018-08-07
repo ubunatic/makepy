@@ -31,20 +31,20 @@ ADD setup.cfg setup.py tox.ini $WORKDIR/
 
 RUN python3 -m makepy install  # install from local module
 RUN makepy install -P 2        # install backport via makepy from local module
-RUN tests/test_makepy.sh \
-	&& tests/test_namespace.sh \
-	&& tests/test_versions.sh \
-	&& tests/test_project.sh demo_project
+RUN tests/test_makepy.sh
+# RUN tests/test_namespace.sh
+# RUN tests/test_versions.sh
+# RUN tests/test_project.sh demo
 
 
-FROM alpine:3.7
-
-COPY --from=builder /workspace/makepy/dist  /dist
-COPY --from=builder /apks.txt               /apks.txt
-COPY --from=builder /reqs.txt               /reqs.txt
-
-RUN apk update && apk add -U --no-cache `cat /apks.txt` \
-	&& pip3 install --no-cache-dir -r /reqs.txt /dist/*py3-none-any.whl \
-	&& pip2 install --no-cache-dir -r /reqs.txt /dist/*py2-none-any.whl
+# FROM alpine:3.7
+# 
+# COPY --from=builder /workspace/makepy/dist  /dist
+# COPY --from=builder /apks.txt               /apks.txt
+# COPY --from=builder /reqs.txt               /reqs.txt
+# 
+# RUN apk update && apk add -U --no-cache `cat /apks.txt` \
+# 	&& pip3 install --no-cache-dir -r /reqs.txt /dist/*py3-none-any.whl \
+# 	&& pip2 install --no-cache-dir -r /reqs.txt /dist/*py2-none-any.whl
 
 ENTRYPOINT ["bash", "-ic"]
