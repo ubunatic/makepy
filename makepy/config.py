@@ -49,8 +49,9 @@ def parse_wheeltag(args=None):
         if arg == '--python-tag': wt = args[i+1]
     return wt
 
-def read_makepy_section(*files, allow_empty=False, cwd='.'):
-    files = set(os.path.join(cwd, f) for f in  list(files) + ['makepy.cfg', 'setup.cfg'])
+def read_makepy_section(cfg_file='setup.cfg', allow_empty=False, cwd='.'):
+    files  = [cfg_file]
+    files += [os.path.join(cwd, f) for f in  ['makepy.cfg', 'setup.cfg']]
     d = {}
     for f in files:
         if os.path.isfile(f): d = read_config(f).get('makepy')
@@ -90,7 +91,7 @@ def read_basic_cfg(trg):
     return d
 
 def read_setup_args(cfg_file='setup.cfg'):
-    d = read_makepy_section(cfg_file)
+    d = read_makepy_section(cfg_file=cfg_file)
 
     author_name  = d.get('author')
     author_email = d.get('email')
