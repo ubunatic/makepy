@@ -189,7 +189,7 @@ Have fun!
 
 Open Issues/Tasks
 -----------------
-* Add support for namespaces.
+* Add Python 2 support for namespaces.
 * Port doc strings + create readthedocs docs.
 * Port version management to use external `bumpversion` command.
 * Port integration tests from make.

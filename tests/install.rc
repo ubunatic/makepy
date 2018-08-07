@@ -1,17 +1,23 @@
 # installs makepy if needed
 
-test -n "$PIP"      || PIP=pip
-test -n "$PIP_ARGS" || PIP_ARGS=
+test -n "$PIP" || PIP=pip
+
+if test -z "$PIP_ARGS"; then
+	if test -n "$USER"
+	then PIP_ARGS=--user
+	else PIP_ARGS=
+	fi
+fi
 
 install_makepy() {
 	echo -n "installing makepy..."
 	if $PIP freeze | grep makepy; then
-		echo "\b\b\b: using installed makepy"
+		echo "using installed makepy"
 	elif test "`basename "$PWD"`" = makepy; then
-		echo "\b\b\b: running in makepy dir, using local makepy dist"
+		echo "running in makepy dir, using local makepy dist"
 		$PIP install -I $PIP_ARGS --no-cache-dir -e "$PWD"
 	else
-		echo "\b\b\b: running outside makepy dir, using pypi dist"
+		echo "running outside makepy dir, using pypi dist"
 		$PIP install $PIP_ARGS --no-cache-dir makepy
 	fi
 }

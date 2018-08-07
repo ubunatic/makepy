@@ -71,23 +71,24 @@ def dists(py=None):
 def install(pkg, py=None, source=False):
     py = py or pyv()
     log.info('installing pkg=%s, tag=py%s (editable=%s)', pkg, py, source)
+    if os.environ.get('USER', '') != '': opts='-I --user'
+    else:                                opts='-I'
+    inst = 'source' if source else 'wheel'
+    log.info('running pip%s install %s to install %s', py, opts, inst)
     if source:
         # os.environ['MAKEPYPATH'] = makepypath()
-        run('pip{} install -I --user -e .'.format(py), cwd=setup_dir(py))
+        run('pip{} install {} -e .'.format(py, opts), cwd=setup_dir(py))
         run('pip{}'.format(py), 'show', pkg)
         if setup_dir(py) == 'backport':
             sys.stderr.write(block(
                 """
                 ### Attention ###
-                Installed {PKG} backport!'
+                Installed {PKG} backport source!'
                 You must run `makepy backport` to update the installation'
                 ### Attention ###
                 """, PKG=pkg
             ))
     else:
-        if os.environ.get('USER', '') != '': opts='-I --user'
-        else:                                opts='-I'
-        log.info('running pip%s install %s', py, opts)
         run('pip{} install {}'.format(py, opts), find_wheel(pkg, 'py{}'.format(py)))
 
 def uninstall(pkg, py=None):
@@ -323,7 +324,9 @@ def add_requirements(commands, py=None):
     req3 = [('install',     'dist'),         # system install requires dist
             ('dists',       'backport')]     # py2 dist requires backport
     req2 = [('dev-install', 'backport'),     # py2 source install requires backport
-            ('dist',        'backport')]     # py2 dist requires backport
+            ('dist',        'backport'),     # py2 dist requires backport
+            ('lint',        'backport'),     # py2 lint requires backport
+            ('test',        'backport')]     # py2 lint requires backport
     req0 = [('clean',       'clean'),        # move clean to front
             ('bumpversion', 'bumpversion')]  # move bumpversion even before clean
 

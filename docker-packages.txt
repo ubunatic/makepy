@@ -1,4 +1,4 @@
-bash bash-completion
+bash bash-completion coreutils
 git make ca-certificates
 
 python2        python3
@@ -16,4 +16,5 @@ py-setuptools
 py-enum34
 pyflakes
 flake8
+pytest
 
