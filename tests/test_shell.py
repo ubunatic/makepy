@@ -1,4 +1,4 @@
-from makepy.cli import github_name
+from makepy.commands import github_name
 from builtins import str
 
 def test_ghname():

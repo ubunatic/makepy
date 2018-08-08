@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 
+source `dirname $0`/install.rc
+
 set -o errexit
 set -o verbose
+
+install_makepy
 
 # create a test project and run main makepy commands
 PRJ="$1"
 test -n "$PRJ"  # ensure PRJ is set
 
-ccat(){ pygmentize $@ | head -n 20; }
+PKG_DIR=`echo "$PRJ" | sed -e 's#\.#/#g' -e 's#-#_#g'`
 
 # asciinema: START
 # lets create a new project
@@ -15,9 +19,9 @@ mkdir $PRJ
 cd $PRJ
 makepy init  # creates all common config and setup files
 ls -la
-ls -la $PRJ
-ccat $PRJ/__init__.py
-ccat $PRJ/__main__.py
+ls -la $PKG_DIR
+ccat $PKG_DIR/__init__.py
+ccat $PKG_DIR/__main__.py
 ccat setup.cfg
 ccat setup.py
 ccat tox.ini
@@ -36,7 +40,7 @@ ls -la dist
 makepy dists  # or just create all dists at once
 ls -la dist
 makepy uninstall  # get rid of all installations
-pip3 install --user dist/$PRJ*py3*.whl
+$PIP install -I $PIP_ARGS dist/*py3*.whl
 $PRJ -h
 $PRJ --debug
 

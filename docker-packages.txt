@@ -1,0 +1,20 @@
+bash bash-completion coreutils
+git make ca-certificates
+
+python2        python3
+py2-pip        py3-pip
+py2-six        py3-six
+py2-argparse   py3-argparse
+py2-pytest     py3-pytest
+py2-future     py3-future
+py2-virtualenv py3-virtualenv
+py2-packaging  py3-packaging
+py2-parsing    py3-parsing
+py2-typing
+
+py-setuptools
+py-enum34
+pyflakes
+flake8
+pytest
+

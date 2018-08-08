@@ -10,4 +10,6 @@ backport
 __pycache__
 *.pyc
 *.pyo
+*.pyd
+*.py-e
 .vol

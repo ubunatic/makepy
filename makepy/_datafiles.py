@@ -5,25 +5,16 @@ dirs  = set()
 
 files['setup.py'] = setup_py = """
 #!/usr/bin/env python
-# NOTE: This is a generated, generic setup.py, produced by `makepy init`.
-#       Try to customize the [makepy] section in setup.cfg first, before editing this file.
-
 from __future__ import absolute_import
+from setuptools import setup
+from subprocess import check_output
+import json
 
-import os, sys
-from setuptools import setup, find_packages
+def setupargs():
+    try:                import makepy.config as m; return m.read_setup_args()
+    except ImportError: return json.loads(check_output(['makepy', 'setupargs']).decode('utf-8'))
 
-try: from makepy.project import read_setup_args  # Try to use makepy module from current env.
-except ImportError:
-    sys.path.append(os.environ['MAKEPYPATH'])    # Fallback to first available system makepy.
-    from makepy.project import read_setup_args   # Usage: MAKEPYPATH=`makepy path` python ...
-
-def run_setup():
-    kwargs = read_setup_args()
-    kwargs['packages'] = find_packages(exclude=['contrib', 'docs', 'tests', 'backport'])
-    setup(**kwargs)
-
-if __name__ == '__main__': run_setup()
+if __name__ == '__main__': setup(**setupargs())
 """
 
 files['.gitignore'] = _gitignore = """
@@ -39,5 +30,7 @@ backport
 __pycache__
 *.pyc
 *.pyo
+*.pyd
+*.py-e
 .vol
 """

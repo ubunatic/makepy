@@ -1,5 +1,4 @@
-from builtins import open as _open
-from builtins import str
+from builtins import str, open as _open
 import subprocess, re, logging, os, sys
 from contextlib import contextmanager
 import shutil as sh
@@ -8,7 +7,7 @@ from os.path import join, isdir, isfile, islink
 log = logging.getLogger(__name__)
 
 def arglist(args, more_args=()):
-    log.debug('arglist: (%s:%s, %s)', args, type(args), more_args)
+    log.debug('arglist: %s, more_args=%s', args, more_args)
     if type(args) not in (list,tuple): args = args.split(' ')
     return list(args) + list(more_args)
 
@@ -41,6 +40,18 @@ def run(args, *more_args, **PopenArgs):
     args = arglist(args, more_args)
     log.debug("run: %s, %s", argstr(args), PopenArgs)
     return subprocess.check_call(args, **PopenArgs)
+
+_py = None
+
+def pyv():
+    """Calls `python` determine and return default major python version."""
+    global _py
+    if _py is None:
+        val = call_unsafe('python', '-c', 'import sys; sys.stdout.write(str(sys.version_info.major))').strip()
+        _py = int(val)
+    return _py
+
+def wheeltag(): return 'py{}'.format(pyv())
 
 def call(args, *more_args, **PopenArgs):
     args = arglist(args, more_args)

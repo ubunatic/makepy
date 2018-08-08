@@ -1,7 +1,12 @@
-from __future__ import absolute_import
-from builtins import open
-from configparser import ConfigParser
-import sys, os
+from builtins import open, str
+try:                from configparser import ConfigParser
+except ImportError: from ConfigParser import ConfigParser
+from setuptools import find_packages
+import sys, os, logging
+
+log = logging.getLogger('makepy')
+
+PKG_EXCLUDES = ('contrib', 'docs', 'tests', 'backport', 'vendor')
 
 def warn(text, *values):
     w = 'WARNING: ' + (text % tuple(values)) + '\n'
@@ -24,9 +29,10 @@ def unquote(s): return s.replace('"','').replace("'",'').strip()
 def cleanup_classifiers(classifiers):
     return [c for c in classifiers if c.strip() != ""]
 
-def read_version(main_dir, init='__init__.py'):
+def read_version(pkg_dir, init='__init__.py'):
+    assert '.' not in os.path.basename(pkg_dir)
     version = tag = None
-    init = os.path.join(main_dir, init)
+    init = os.path.join(pkg_dir, init)
     for l in read_lines(init):
         if   l.startswith('__version__'): version = unquote(l.split('=')[1])
         elif l.startswith('__tag__'):     tag     = unquote(l.split('=')[1])
@@ -37,35 +43,67 @@ def read_version(main_dir, init='__init__.py'):
 
 def parse_wheeltag(args=None):
     if args is None: args = sys.argv[1:]
-    wheeltag = 'py{}'.format(sys.version_info.major)
+    from makepy.shell import wheeltag
+    wt = wheeltag()
     for i, arg in enumerate(args):
-        if arg == '--python-tag': wheeltag = args[i+1]
-    return wheeltag
+        if arg == '--python-tag': wt = args[i+1]
+    return wt
 
-def read_makepy_section(*files):
-    files = set(tuple(files) + ('makepy.cfg', 'setup.cfg'))
-    d = None
+def read_makepy_section(cfg_file='setup.cfg', allow_empty=False, cwd='.'):
+    files  = [cfg_file]
+    files += [os.path.join(cwd, f) for f in  ['makepy.cfg', 'setup.cfg']]
+    d = {}
     for f in files:
         if os.path.isfile(f): d = read_config(f).get('makepy')
-        if d is not None: break
-    if d is None:
+        if len(d) > 0: break
+    if d is None and not allow_empty:
         raise Exception('[makepy] section not found in config files', files,
                         os.listdir('.'))
     return d
 
+def find_packages_ns(ns, exclude=PKG_EXCLUDES, allow_empty=False):
+    # TODO: find out where "None" string comes from
+    assert ns is not None, "missing namespace"
+    assert ns != 'None',   "invalid namespace"
+    if ns == '': ns = '.'
+    pkgs = find_packages(ns, exclude=exclude)
+    assert allow_empty or len(pkgs) > 0, "no packages found in namespace: " + ns
+    if ns != '.': pkgs = ['{}.{}'.format(ns, p) for p in pkgs]
+    return pkgs
+
+def package_dir(module):
+    return os.path.join(*module.split('.'))
+
+def package_name(module):
+    return module.replace('.', '-')
+
+def module_name(pkg_dir):
+    return pkg_dir.replace('-', '_').replace('/', '.').replace('\\', '.')
+
+def read_basic_cfg(trg):
+    d = read_makepy_section(allow_empty=True, cwd=trg)
+    if len(d) > 0:
+        log.debug('loaded values from %s: %s', trg, {
+            'name':   d.get('name',   ''),
+            'module': d.get('module', ''),
+            'main':   d.get('main',   ''),
+        })
+    return d
+
 def read_setup_args(cfg_file='setup.cfg'):
-    d = read_makepy_section(cfg_file)
+    d = read_makepy_section(cfg_file=cfg_file)
 
     author_name  = d.get('author')
     author_email = d.get('email')
     github_name  = d.get('github_name')
 
-    name     = d['name']
-    license  = d['license']
-    main     = d['main']
-    binary   = d.get('binary')
-    requires = d.get('requires','').split(' ')
-    keywords = d.get('keywords','').split(' ')
+    name      = d['name']
+    license   = d['license']
+    module    = d.get('module', module_name(name))
+    main      = d.get('main', module)
+    binary    = d.get('binary')
+    requires  = d.get('requires','').split(' ')
+    keywords  = d.get('keywords','').split(' ')
 
     description   = d['description']
     readme_format = d.get('readme_format', 'text/markdown')
@@ -79,7 +117,9 @@ def read_setup_args(cfg_file='setup.cfg'):
 
     scripts = [s.split('=') for s in d.get('scripts','').strip().split('\n')]
 
-    code_version, tag = read_version(os.path.join(project_dir, main))
+    pkg_dir = os.path.join(project_dir, *module.split('.'))
+    log.debug('read_setup_args: pkg_dir=%s, module=%s', pkg_dir, module)
+    code_version, tag = read_version(pkg_dir)
     wheeltag          = parse_wheeltag()
     version           = d.get('version', code_version)
     if version != code_version:
@@ -98,7 +138,6 @@ def read_setup_args(cfg_file='setup.cfg'):
     deps_backport = d.get('backport_deps','').split(' ')
 
     console_scripts = ['{}={}'.format(cmd, spec) for cmd, spec in scripts]
-    entry_points    = {'console_scripts': console_scripts}
 
     if binary is not None and main is not None:
         script = '{b}={m}:main'.format(b=binary, m=main)
@@ -124,6 +163,9 @@ def read_setup_args(cfg_file='setup.cfg'):
     else:
         requires += deps_default
 
+    log.debug('console_scripts: %s', console_scripts)
+    entry_points = {'console_scripts': console_scripts}
+
     # NOTE: We must not distinguish between py2/py3 in python_requires and classifiers,
     #       since this will prevent pip2 to find the py2 wheel for versions, which have
     #       the py3 wheel tagged with, e.g., '>=3'.
@@ -147,6 +189,14 @@ def read_setup_args(cfg_file='setup.cfg'):
 
     classifiers = cleanup_classifiers(classifiers)
 
+    # TODO: support multi level namespaces
+    pkg_dir = module.split('.')
+    if len(pkg_dir) == 1: ns = '.'
+    else:                 ns = pkg_dir[0]
+
+    packages = find_packages_ns(ns)
+    log.debug('packages: %s, namespace: %s', packages, ns)
+
     return dict(
         name             = project_name,
         version          = version,
@@ -160,6 +210,7 @@ def read_setup_args(cfg_file='setup.cfg'):
         license          = license,
         classifiers      = classifiers,
         keywords         = keywords,
+        packages         = packages,
         install_requires = requires,
         # example: pip install widdy[dev]
         extras_require = {
