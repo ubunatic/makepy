@@ -3,7 +3,7 @@
 all: clean test         # define default target before anything else
 include make/makepy.mk  # include all makepy vars and targets
 clean: pyclean-all      # clean up anything
-	rm -rf test_project test_namespace.project  # remove broken test dirs
+	rm -rf test_project demo*  # remove broken test dirs
 
 # re-build the in-line datafiles if changed using makepy:datafiles target
 PY_DATAFILE := makepy/_datafiles.py
@@ -18,7 +18,7 @@ $(PY_MAKEFILE): Makefile $(MAKEFILES) ; $(MAKEPY) embed --debug -f -i $(MAKEFILE
 $(MAKEPY_COMMANDS) test: $(SRC_FILES) datafiles
 
 # setup makepy script-test
-SCRIPT_TEST = tests/test_examples.sh && tests/test_makepy.sh && tests/test_namespace.sh
+SCRIPT_TEST = tests/test_examples.sh && tests/test_makepy.sh
 test: script-test
 
 # define the docker image for gcr.io
