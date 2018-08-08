@@ -61,7 +61,7 @@ def call(args, *more_args, **PopenArgs):
 
 def call_unsafe(args, *more_args, **PopenArgs):
     try: return call(args, *more_args, **PopenArgs)
-    except subprocess.CalledProcessError as err:
+    except Exception as err:
         log.warn('ignoring failed call_unsafe for cmd %s: %s', args, err)
         return ''
 

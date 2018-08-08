@@ -209,7 +209,7 @@ publish: sign
 \t# upload to pypi (requires pypi account)
 \t# p3-wheel: $(PY3_WHEEL)
 \t# p2-wheel: $(PY2_WHEEL)
-\t@read -p "start upload (y/N)? " key && test "$$key" = "y"
+\t@bash -c 'read -n 1 -p "start upload (y/N)? " key && test "$$key" = "y"'
 \ttwine upload --repository pypi $(PY3_WHEEL) $(PY2_WHEEL)
 
 """
