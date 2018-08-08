@@ -155,7 +155,7 @@ def generate_packagefiles(pkg_dir, main):
     write_file('cli.py',      pkg_dir, templates['cli.py'].format(MAIN=main))
 
 def user_name():
-    name = call_unsafe('git config --get user.name').strip()
+    name = call_unsafe('git config --get user.name', warn=False).strip()
     log.debug('git user.name: %s', name)
     if name == '': name = str(os.environ.get('USER', 'System Root'))
     return name
@@ -165,7 +165,7 @@ def safe_name(): return str(re.sub(r'[^a-z0-9_\.-]', '.', user_name().lower()))
 def github_name(): return str(os.environ.get('GITHUB_NAME', safe_name()))
 
 def user_email():
-    email = call_unsafe('git config --get user.email').strip()
+    email = call_unsafe('git config --get user.email', warn=False).strip()
     if email == '': email = safe_name() + '@gmail.com'
     return str(email)
 

@@ -48,7 +48,8 @@ def pyv():
     global _py
     if _py is None:
         val = call_unsafe('python', '-c', 'import sys; sys.stdout.write(str(sys.version_info.major))').strip()
-        _py = int(val)
+        if val == '': _py = sys.version_info.major
+        else:         _py = int(val)
     return _py
 
 def wheeltag(): return 'py{}'.format(pyv())
@@ -60,9 +61,11 @@ def call(args, *more_args, **PopenArgs):
     return str(bytes(res).decode('utf-8'))
 
 def call_unsafe(args, *more_args, **PopenArgs):
+    warn = PopenArgs.get('warn', False)
+    if 'warn' in PopenArgs: del PopenArgs['warn']
     try: return call(args, *more_args, **PopenArgs)
     except Exception as err:
-        log.warn('ignoring failed call_unsafe for cmd %s: %s', args, err)
+        if warn: log.warn('ignoring failed call_unsafe for cmd %s: %s', args, err)
         return ''
 
 def rm(*args):
