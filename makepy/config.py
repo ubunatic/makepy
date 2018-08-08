@@ -54,9 +54,10 @@ def read_makepy_section(cfg_file='setup.cfg', allow_empty=False, cwd='.'):
     files += [os.path.join(cwd, f) for f in  ['makepy.cfg', 'setup.cfg']]
     d = {}
     for f in files:
-        if os.path.isfile(f): d = read_config(f).get('makepy')
-        if len(d) > 0: break
-    if d is None and not allow_empty:
+        v = None
+        if os.path.isfile(f): v = read_config(f).get('makepy')
+        if v is not None and len(v) > 0: d = v; break
+    if len(d) == 0 and not allow_empty:
         raise Exception('[makepy] section not found in config files', files,
                         os.listdir('.'))
     return d
