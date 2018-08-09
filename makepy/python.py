@@ -26,24 +26,26 @@ def wheeltag(py=None):
     return 'py{}'.format(py or pyv())
 
 def pip(py=None):
-    py = py or pyv()
-    if py == pyv():
-        exe = 'pip'
-        log.info('using default pip: %s', exe)
-    elif sys.version_info.major == py:
-        base = os.path.basename(sys.executable)
-        if 'python' in base:
-            exe = base.replace('python', 'pip')
-            log.info('using sys.executable as pip base: %s', exe)
-        else:
-            log.warn('unknown sys.executable, using pip string: %s', exe)
-    else:
-        # TODO: test existence and find alternatives
-        exe = 'pip{}'.format(py)
-        log.info('using pip string: %s', exe)
-    # TODO: allow spaces!
-    if ' ' in exe: raise ValueError('pip executable with spaces is not supported')
-    return exe
+    return '{} -m pip'.format(python(py))
+    # py = py or pyv()
+    # if py == pyv():
+    #     exe = 'python -m pip'
+    #     v = check_output(exe.split(' ') + ['--version'])
+    #     log.info('using default pip: %s (%s)', exe, v)
+    # elif sys.version_info.major == py:
+    #     base = os.path.basename(sys.executable)
+    #     if 'python' in base:
+    #         exe = base.replace('python', 'pip')
+    #         log.info('using sys.executable as pip base: %s', exe)
+    #     else:
+    #         log.warn('unknown sys.executable, using pip string: %s', exe)
+    # else:
+    #     # TODO: test existence and find alternatives
+    #     exe = 'pip{}'.format(py)
+    #     log.info('using pip string: %s', exe)
+    # # TODO: allow spaces!
+    # # if ' ' in exe: raise ValueError('pip executable with spaces is not supported')
+    # return exe
 
 def python(py=None):
     py = py or pyv()
