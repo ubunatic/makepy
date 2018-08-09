@@ -13,6 +13,17 @@ main_script="
 	RUN makepy init -t demo3 -p demo.three
 	RUN mkdir -p demo4 && cd demo4 && makepy init
 	RUN mkdir -p demo5 && cd demo5 && makepy init -p demo.five
+	RUN apk add \$PY-pytest
+	RUN cd demo1 && makepy test
+	RUN cd demo2 && makepy test
+	RUN cd demo3 && makepy test
+	RUN cd demo4 && makepy test
+	RUN cd demo5 && makepy test
+	RUN \$PIP freeze | grep demo1
+	RUN \$PIP freeze | grep demo2
+	RUN \$PIP freeze | grep demo-three
+	RUN \$PIP freeze | grep demo4
+	RUN \$PIP freeze | grep demo-five
 "
 
 for deps in "git"; do
@@ -25,17 +36,19 @@ for py in 2 3; do
 	FROM alpine:3.7
 	RUN apk add -U py$py-pip python$py bash bash-completion coreutils
 	RUN test -e /usr/bin/python || cp /usr/bin/python$py /usr/bin/python
-	RUN pip$py install wheel
+	ENV PIP pip$py
+	ENV PY  py$py
+	RUN \$PIP install wheel
 	ADD dist /dist
 	RUN ls -la /dist
-	RUN pip$py install $whl
+	RUN \$PIP install $whl
 	# 1. Test with default packages.
 	$main_script
 	# 2. Test with extra apks.
 	RUN apk add $deps
 	$main_script
 	# 3. Test with extra pip packages.
-	RUN pip$py install $pkgs
+	RUN \$PIP install $pkgs
 	$main_script
 	DF
 	echo "
