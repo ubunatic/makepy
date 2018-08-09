@@ -7,7 +7,8 @@ from glob import glob
 from os.path import join, isfile, dirname, abspath, basename
 from makepy import argparse
 from makepy.config import read_setup_args, package_dir, read_config, read_basic_cfg, module_name
-from makepy.shell import run, cp, call_unsafe, sed, mkdir, rm, block, open, pyv
+from makepy.shell import run, cp, call_unsafe, sed, mkdir, rm, block, open
+from makepy.python import pyv, python, pip
 
 # load files and templates
 from makepy._templates import templates
@@ -20,9 +21,6 @@ log = logging.getLogger('makepy')
 
 here = dirname(__file__)
 
-def python(py=None):
-    py = py or pyv()
-    return 'python{}'.format(py)
 
 def transpile(target):
     run('pasteurize -j 8 -w --no-diff ', target)
@@ -77,8 +75,8 @@ def install(pkg, py=None, source=False):
     log.info('running pip%s install %s to install %s', py, opts, inst)
     if source:
         # os.environ['MAKEPYPATH'] = makepypath()
-        run('pip{} install {} -e .'.format(py, opts), cwd=setup_dir(py))
-        run('pip{}'.format(py), 'show', pkg)
+        run('{} install {} -e .'.format(pip(py), opts), cwd=setup_dir(py))
+        run('{}'.format(pip(py)), 'show', pkg)
         if setup_dir(py) == 'backport':
             sys.stderr.write(block(
                 """
@@ -89,12 +87,12 @@ def install(pkg, py=None, source=False):
                 """, PKG=pkg
             ))
     else:
-        run('pip{} install {}'.format(py, opts), find_wheel(pkg, 'py{}'.format(py)))
+        run('{} install {}'.format(pip(py), opts), find_wheel(pkg, 'py{}'.format(py)))
 
 def uninstall(pkg, py=None):
     py = py or pyv()
     assert pkg is not None
-    for p in {'pip', 'pip{}'.format(py), 'pip2', 'pip3'}:
+    for p in {'pip', pip(py), pip(2), pip(3), pip(4)}:
         try: run(p, 'uninstall', '-y', pkg)
         except Exception: pass
 

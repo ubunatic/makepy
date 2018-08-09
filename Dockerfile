@@ -24,8 +24,8 @@ ENV WORKDIR /workspace/makepy
 RUN mkdir -p $WORKDIR
 WORKDIR $WORKDIR
 
-ADD makepy     $WORKDIR/makepy
-ADD tests/*.py $WORKDIR/tests/
+ADD makepy        $WORKDIR/makepy
+ADD tests/py/*.py $WORKDIR/tests/py/
 ADD examples $WORKDIR/examples
 ADD .gitignore LICENSE.txt README.md $WORKDIR/
 ADD setup.cfg setup.py tox.ini $WORKDIR/

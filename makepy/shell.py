@@ -1,4 +1,4 @@
-from builtins import str, open as _open
+from builtins import str, open as _open  # noqa:F811
 import subprocess, re, logging, os, sys
 from contextlib import contextmanager
 import shutil as sh
@@ -13,8 +13,8 @@ def arglist(args, more_args=()):
 
 def argstr(args): return ' '.join(str(a) for a in args)
 
-@contextmanager
-def open(filename, mode='r', **kwargs):  # flake8:noqa=F811
+@contextmanager  # noqa:F811
+def open(filename, mode='r', **kwargs):  # noqa:F811
     fh = None
     try:
         if filename == '-':
@@ -40,19 +40,6 @@ def run(args, *more_args, **PopenArgs):
     args = arglist(args, more_args)
     log.debug("run: %s, %s", argstr(args), PopenArgs)
     return subprocess.check_call(args, **PopenArgs)
-
-_py = None
-
-def pyv():
-    """Calls `python` determine and return default major python version."""
-    global _py
-    if _py is None:
-        val = call_unsafe('python', '-c', 'import sys; sys.stdout.write(str(sys.version_info.major))').strip()
-        if val == '': _py = sys.version_info.major
-        else:         _py = int(val)
-    return _py
-
-def wheeltag(): return 'py{}'.format(pyv())
 
 def call(args, *more_args, **PopenArgs):
     args = arglist(args, more_args)

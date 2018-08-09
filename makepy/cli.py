@@ -6,7 +6,7 @@ import makepy.commands as _cmd
 from makepy import argparse
 from makepy.tox import tox, clean
 from makepy.config import read_setup_args, read_basic_cfg, module_name, package_dir, package_name
-from makepy.shell import pyv, wheeltag
+from makepy.python import pyv, wheeltag
 from os.path import abspath, basename
 
 log = logging.getLogger('makepy')
